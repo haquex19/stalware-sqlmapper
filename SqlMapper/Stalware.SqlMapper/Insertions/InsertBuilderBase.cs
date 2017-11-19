@@ -5,12 +5,11 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 
-namespace Stalware.SqlMapper
+namespace Stalware.SqlMapper.Insertions
 {
     /// <summary>
     /// Implements <see cref="IInsertBuilder{T}"/>
     /// </summary>
-    /// <typeparam name="T">The default table type for the class</typeparam>
     public abstract class InsertBuilderBase<T> : IInsertBuilder<T> where T : new()
     {
         /// <summary>
@@ -44,10 +43,21 @@ namespace Stalware.SqlMapper
         protected readonly SqlMapperResult Result;
 
         /// <summary>
+        /// The record object to insert
+        /// </summary>
+        protected readonly T Record;
+
+        /// <summary>
+        /// Indicates if the id column has already been added to the insert statement
+        /// </summary>
+        protected bool IdColumnAdded;
+
+        /// <summary>
         /// Instantiates the <see cref="InsertBuilderBase{T}"/> abstract class
         /// </summary>
-        protected InsertBuilderBase()
+        protected InsertBuilderBase(T record)
         {
+            Record = record;
             var type = typeof(T);
 
             InsertBuilder = new StringBuilder($"INSERT INTO {type.Name} (");
@@ -70,15 +80,19 @@ namespace Stalware.SqlMapper
         /// </summary>
         public SqlMapperResult Build()
         {
-            InsertBuilder.Append($") {BetweenBuilder}{ValuesBuilder});{EndBuilder}");
+            RemoveInsertAndValuesExtraComma();
+
+            InsertBuilder.Append($") {BetweenBuilder}{ValuesBuilder}){EndBuilder}");
             Result.Query = InsertBuilder.ToString();
             return Result;
-        }        
+        }
 
         /// <summary>
-        /// Implements <see cref="IInsertBuilder{T}.InsertAll(T, bool)"/>
+        /// Implements <see cref="IInsertBuilder{T}.InsertAll(bool)"/>
         /// </summary>
-        public IInsertBuilder<T> InsertAll(T record, bool includeId = false)
+        /// <exception cref="InvalidOperationException">Thrown if <paramref name="includeId"/> is set to true but the 
+        /// id column has already been added</exception>
+        public IInsertBuilder<T> InsertAll(bool includeId = false)
         {
             var properties = typeof(T).GetProperties();
             foreach (var prop in properties)
@@ -88,17 +102,18 @@ namespace Stalware.SqlMapper
                     continue;
                 }
 
-                AddPropToInsertAndValues(prop, record);
+                AddPropToInsertAndValues(prop, includeId);
             }
-            RemoveInsertAndValuesExtraComma();
 
             return this;
         }
 
         /// <summary>
-        /// Implements <see cref="IInsertBuilder{T}.InsertAllExcept(T, Func{T, object}, bool)"/>
+        /// Implements <see cref="IInsertBuilder{T}.InsertAllExcept(Func{T, object}, bool)"/>
         /// </summary>
-        public IInsertBuilder<T> InsertAllExcept(T record, Func<T, object> exceptColumns, bool includeId = false)
+        /// <exception cref="InvalidOperationException">Thrown if <paramref name="includeId"/> is set to true but the 
+        /// id column has already been added</exception>
+        public IInsertBuilder<T> InsertAllExcept(Func<T, object> exceptColumns, bool includeId = false)
         {
             var properties = typeof(T).GetProperties();
             var exceptObj = exceptColumns(new T());
@@ -110,17 +125,19 @@ namespace Stalware.SqlMapper
                 {
                     continue;
                 }
-                AddPropToInsertAndValues(prop, record);
+
+                AddPropToInsertAndValues(prop, includeId);
             }
-            RemoveInsertAndValuesExtraComma();
 
             return this;
         }
 
         /// <summary>
-        /// Implements <see cref="IInsertBuilder{T}.InsertOnly(T, Func{T, object}, bool)"/>
+        /// Implements <see cref="IInsertBuilder{T}.InsertOnly(Func{T, object}, bool)"/>
         /// </summary>
-        public IInsertBuilder<T> InsertOnly(T record, Func<T, object> onlyColumns, bool includeId = false)
+        /// <exception cref="InvalidOperationException">Thrown if <paramref name="includeId"/> is set to true but the 
+        /// id column has already been added</exception>
+        public IInsertBuilder<T> InsertOnly(Func<T, object> onlyColumns, bool includeId = false)
         {
             var properties = typeof(T).GetProperties();
             var onlyColumnsObj = onlyColumns(new T());
@@ -135,19 +152,28 @@ namespace Stalware.SqlMapper
                         continue;
                     }
 
-                    AddPropToInsertAndValues(prop, record);
+                    AddPropToInsertAndValues(prop, includeId);
                 }
-            }
-            RemoveInsertAndValuesExtraComma();
+            }            
 
             return this;
         }
 
-        private void AddPropToInsertAndValues(PropertyInfo property, object obj)
+        private void AddPropToInsertAndValues(PropertyInfo property, bool includeId)
         {
+            if (property.Name == IdColumnName && IdColumnAdded && includeId)
+            {
+                throw new InvalidOperationException("Requested to add the id column, but the id column has already been added");
+            }
+
+            if (property.Name == IdColumnName && includeId)
+            {
+                IdColumnAdded = true;
+            }
+
             InsertBuilder.Append($"{property.Name}, ");
             ValuesBuilder.Append($"@{property.Name}, ");
-            var value = property.GetValue(obj);
+            var value = property.GetValue(Record);
 
             Result.Parameters.Add(new KeyValuePair<string, object>(property.Name, value));
         }

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Text;
 
-namespace Stalware.SqlMapper
+namespace Stalware.SqlMapper.Insertions
 {
     /// <summary>
     /// Interface that contains methods for creating an INSERT statement
@@ -20,28 +20,25 @@ namespace Stalware.SqlMapper
         /// <summary>
         /// Inserts all properties of an object to the table
         /// </summary>
-        /// <param name="record">The record to insert</param>
         /// <param name="includeId">Should the id column be explicitly inserted</param>
         /// <returns>Self</returns>
-        IInsertBuilder<T> InsertAll(T record, bool includeId = false);
+        IInsertBuilder<T> InsertAll(bool includeId = false);
 
         /// <summary>
         /// Inserts all properties of an object except the specified properties
         /// </summary>
-        /// <param name="record">The record to insert</param>
         /// <param name="exceptColumns">The properties to exclude in the insert</param>
         /// <param name="includeId">Should the id column be explicitly inserted</param>
         /// <returns>Self</returns>
-        IInsertBuilder<T> InsertAllExcept(T record, Func<T, object> exceptColumns, bool includeId = false);
+        IInsertBuilder<T> InsertAllExcept(Func<T, object> exceptColumns, bool includeId = false);
 
         /// <summary>
         /// Inserts only the indicated properties in the insert
         /// </summary>
-        /// <param name="record">The record to insert</param>
         /// <param name="onlyColumns">The properties to include in the insert</param>
         /// <param name="includeId">Should the id column be explicitly inserted</param>
         /// <returns>Self</returns>
-        IInsertBuilder<T> InsertOnly(T record, Func<T, object> onlyColumns, bool includeId = false);
+        IInsertBuilder<T> InsertOnly(Func<T, object> onlyColumns, bool includeId = false);
 
         /// <summary>
         /// Buils the insert statement

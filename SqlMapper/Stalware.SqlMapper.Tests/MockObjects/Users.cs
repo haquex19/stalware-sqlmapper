@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Stalware.SqlMapper.Attributes;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -6,6 +7,7 @@ namespace Stalware.SqlMapper.Tests.MockObjects
 {
     public class Users
     {
+        [IdColumn]
         public long Id { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime ModifiedAt { get; set; }
