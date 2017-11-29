@@ -6,18 +6,17 @@ using System.Text;
 namespace Stalware.SqlMapper.Insertions
 {
     /// <summary>
-    /// Implements <see cref="InsertBuilderBase{T}"/>.
+    /// Implements <see cref="InsertBuilderBase{T}"/> and <see cref="IMySqlInsertBuilder{T}"/>
     /// </summary>
-    /// <remarks>Provides MySQL specific insert statements</remarks>
-    public class MySQLInsertBuilder<T> : InsertBuilderBase<T> where T : new()
+    public class MySqlInsertBuilder<T> : InsertBuilderBase<T>, IMySqlInsertBuilder<T> where T : new()
     {
         private bool _serverGuidIdStatementAdded;
 
         /// <summary>
-        /// Instantiates the <see cref="MySQLInsertBuilder{T}"/> class by setting the record to insert
+        /// Instantiates the <see cref="MySqlInsertBuilder{T}"/> class by setting the record to insert
         /// </summary>
         /// <param name="record">The record object to insert</param>
-        public MySQLInsertBuilder(T record) : base(record) { }
+        public MySqlInsertBuilder(T record) : base(record) { }
 
         /// <summary>
         /// Overrides <see cref="InsertBuilderBase{T}.AddServerGuidIdStatement"/> and implements <see cref="IInsertBuilder{T}.AddServerGuidIdStatement"/>
@@ -39,33 +38,41 @@ namespace Stalware.SqlMapper.Insertions
 
             InsertBuilder.Append($"{IdColumnName}, ");
             ValuesBuilder.Append("UUID(), ");
+            IdColumnAdded = true;
             _serverGuidIdStatementAdded = true;
             return this;
         }
 
         /// <summary>
-        /// Modifies the insert statement so that a new UUID can be retrieved after executing the statement
+        /// Overrides <see cref="InsertBuilderBase{T}.Clear"/>
         /// </summary>
-        /// <returns>Self</returns>
+        public override IInsertBuilder<T> Clear()
+        {
+            _serverGuidIdStatementAdded = false;
+            return base.Clear();
+        }
+
+        /// <summary>
+        /// Implements <see cref="IMySqlInsertBuilder{T}.GetInsertedUUID"/>
+        /// </summary>
         /// <exception cref="InvalidOperationException">Thrown if the <see cref="AddServerGuidIdStatement"/> method was not called</exception>
-        public virtual IInsertBuilder<T> GetInsertedUUID()
+        public IMySqlInsertBuilder<T> GetInsertedUUID()
         {
             if (!_serverGuidIdStatementAdded)
             {
                 throw new InvalidOperationException("The server guid id statement has not beed added. This is required");
             }
 
-            InsertBuilder.Insert(0, "SET @temp = SELECT UUID(); ");
+            BeforeBuilder.Append("SET @temp = SELECT UUID(); ");
             ValuesBuilder.Replace("UUID(), ", "@temp, ");
             EndBuilder.Append("; SELECT @temp;");
             return this;
         }
 
         /// <summary>
-        /// Adds to the insert statement so that the last auto incremented id can be retrieved
+        /// Implements <see cref="IMySqlInsertBuilder{T}.GetLastAutoIncrementId"/>
         /// </summary>
-        /// <returns>Self</returns>
-        public virtual IInsertBuilder<T> GetLastAutoIncrementId()
+        public IMySqlInsertBuilder<T> GetLastAutoIncrementId()
         {
             EndBuilder.Append("; SELECT LAST_INSERT_ID();");
             return this;

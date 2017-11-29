@@ -17,14 +17,14 @@ namespace Stalware.SqlMapper
         /// <summary>
         /// The paramaters for the query string in <see cref="Query"/>
         /// </summary>
-        public List<KeyValuePair<string, object>> Parameters { get; set; }
+        public Dictionary<string, object> Parameters { get; set; }
 
         /// <summary>
         /// Instantiates the <see cref="SqlMapperResult"/> class
         /// </summary>
         public SqlMapperResult()
         {
-            Parameters = new List<KeyValuePair<string, object>>();
+            Parameters = new Dictionary<string, object>();
         }
 
         /// <summary>
@@ -32,7 +32,7 @@ namespace Stalware.SqlMapper
         /// </summary>
         /// <param name="query">The query</param>
         /// <param name="parameters">The parameters for the query string in <paramref name="query"/></param>
-        public SqlMapperResult(string query, List<KeyValuePair<string, object>> parameters) : this()
+        public SqlMapperResult(string query, Dictionary<string, object> parameters)
         {
             Query = query;
             Parameters = parameters;

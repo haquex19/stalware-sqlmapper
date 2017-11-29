@@ -1,4 +1,5 @@
 ﻿using Stalware.SqlMapper.Attributes;
+using Stalware.SqlMapper.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,6 +13,11 @@ namespace Stalware.SqlMapper.Insertions
     /// </summary>
     public abstract class InsertBuilderBase<T> : IInsertBuilder<T> where T : new()
     {
+        /// <summary>
+        /// A builder that inserts text before the INSERT clause
+        /// </summary>
+        protected readonly StringBuilder BeforeBuilder;
+
         /// <summary>
         /// The insert builder
         /// </summary>
@@ -58,16 +64,15 @@ namespace Stalware.SqlMapper.Insertions
         protected InsertBuilderBase(T record)
         {
             Record = record;
-            var type = typeof(T);
 
-            InsertBuilder = new StringBuilder($"INSERT INTO {type.Name} (");
-            ValuesBuilder = new StringBuilder("VALUES (");
+            BeforeBuilder = new StringBuilder();
+            InsertBuilder = new StringBuilder();
+            ValuesBuilder = new StringBuilder();
             BetweenBuilder = new StringBuilder();
             EndBuilder = new StringBuilder();
             Result = new SqlMapperResult();
 
-            var idProperty = type.GetProperties().FirstOrDefault(x => Attribute.IsDefined(x, typeof(IdColumn)));
-            IdColumnName = idProperty?.Name;
+            IdColumnName = typeof(T).GetProperties().GetIdColumnAttributeName();
         }
         
         /// <summary>
@@ -76,15 +81,35 @@ namespace Stalware.SqlMapper.Insertions
         public abstract IInsertBuilder<T> AddServerGuidIdStatement();
 
         /// <summary>
-        /// Implements <see cref="IInsertBuilder{T}.Build"/>
+        /// Implements <see cref="IBuilder{TBuilder}.Build"/>
         /// </summary>
         public SqlMapperResult Build()
         {
-            RemoveInsertAndValuesExtraComma();
+            InsertBuilder.Insert(0, $"INSERT INTO {typeof(T).Name} (");
+            InsertBuilder.Remove(InsertBuilder.Length - 2, 2);
 
-            InsertBuilder.Append($") {BetweenBuilder}{ValuesBuilder}){EndBuilder}");
-            Result.Query = InsertBuilder.ToString();
+            ValuesBuilder.Insert(0, "VALUES (");
+            ValuesBuilder.Remove(ValuesBuilder.Length - 2, 2);
+
+            BeforeBuilder.Append($"{InsertBuilder}) {BetweenBuilder}{ValuesBuilder}){EndBuilder}");
+            Result.Query = BeforeBuilder.ToString();
             return Result;
+        }
+
+        /// <summary>
+        /// Implements <see cref="IBuilder{TBuilder}.Clear"/>
+        /// </summary>
+        public virtual IInsertBuilder<T> Clear()
+        {
+            BeforeBuilder.Clear();
+            InsertBuilder.Clear();
+            ValuesBuilder.Clear();
+            BetweenBuilder.Clear();
+            EndBuilder.Clear();
+            Result.Query = null;
+            Result.Parameters = new Dictionary<string, object>();
+            IdColumnAdded = false;
+            return this;
         }
 
         /// <summary>
@@ -175,13 +200,7 @@ namespace Stalware.SqlMapper.Insertions
             ValuesBuilder.Append($"@{property.Name}, ");
             var value = property.GetValue(Record);
 
-            Result.Parameters.Add(new KeyValuePair<string, object>(property.Name, value));
-        }
-
-        private void RemoveInsertAndValuesExtraComma()
-        {
-            InsertBuilder.Remove(InsertBuilder.Length - 2, 2);
-            ValuesBuilder.Remove(ValuesBuilder.Length - 2, 2);
-        }        
+            Result.Parameters.Add(property.Name, value);
+        }       
     }
 }

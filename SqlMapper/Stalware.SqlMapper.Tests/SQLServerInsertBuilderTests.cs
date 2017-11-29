@@ -8,12 +8,12 @@ using System.Text;
 namespace Stalware.SqlMapper.Tests
 {
     [TestClass]
-    public class SQLServerInsertBuilderTests
+    public class SqlServerInsertBuilderTests
     {
         [TestMethod]
         public void AddServerGuidTest()
         {
-            var result = new SQLServerInsertBuilder<Users>(Utils.GetMockUser())
+            var result = new SqlServerInsertBuilder<Users>(Utils.GetMockUser())
                 .InsertOnly(x => new { x.FirstName })
                 .AddServerGuidIdStatement()
                 .Build();
@@ -22,14 +22,13 @@ namespace Stalware.SqlMapper.Tests
                 "VALUES (@FirstName, NEWID())";
 
             Assert.AreEqual(expected, result.Query);
-            Assert.AreEqual("FirstName", result.Parameters[0].Key);
-            Assert.AreEqual("Ganondorf", result.Parameters[0].Value);
+            Assert.AreEqual("Ganondorf", result.Parameters["FirstName"]);
         }
 
         [TestMethod]
         public void GetInsertedIdTest()
         {
-            var builder = new SQLServerInsertBuilder<Users>(Utils.GetMockUser());
+            var builder = new SqlServerInsertBuilder<Users>(Utils.GetMockUser());
             builder
                 .InsertOnly(x => new { x.FirstName })
                 .AddServerGuidIdStatement();
@@ -43,14 +42,13 @@ namespace Stalware.SqlMapper.Tests
                 "SELECT Id FROM #temp;";
 
             Assert.AreEqual(expected, result.Query);
-            Assert.AreEqual("FirstName", result.Parameters[0].Key);
-            Assert.AreEqual("Ganondorf", result.Parameters[0].Value);
+            Assert.AreEqual("Ganondorf", result.Parameters["FirstName"]);
         }
 
         [TestMethod]
         public void GetInsertedIdCustomTypeTest()
         {
-            var builder = new SQLServerInsertBuilder<Users>(Utils.GetMockUser());
+            var builder = new SqlServerInsertBuilder<Users>(Utils.GetMockUser());
             builder
                 .InsertOnly(x => new { x.FirstName })
                 .AddServerGuidIdStatement();
@@ -64,8 +62,29 @@ namespace Stalware.SqlMapper.Tests
                 "SELECT Id FROM #temp;";
 
             Assert.AreEqual(expected, result.Query);
-            Assert.AreEqual("FirstName", result.Parameters[0].Key);
-            Assert.AreEqual("Ganondorf", result.Parameters[0].Value);
+            Assert.AreEqual("Ganondorf", result.Parameters["FirstName"]);
+        }
+
+        [TestMethod]
+        public void SQLServerInsertClearTest()
+        {
+            var builder = new SqlServerInsertBuilder<Users>(Utils.GetMockUser());
+            builder.GetInsertedId<long>()
+                .InsertOnly(x => new { x.FirstName })
+                .AddServerGuidIdStatement();
+
+            builder.Clear();
+            var result = builder
+                .GetInsertedId<Guid>()
+                .InsertOnly(x => new { x.LastName })
+                .Build();
+
+            var expected = "CREATE TABLE #temp (Id UNIQUEIDENTIFIER); " +
+                "INSERT INTO Users (LastName) OUTPUT INSERTED.Id INTO #temp " +
+                "VALUES (@LastName); SELECT Id FROM #temp;";
+
+            Assert.AreEqual(expected, result.Query);
+            Assert.AreEqual("Dragmire", result.Parameters["LastName"]);
         }
     }
 }

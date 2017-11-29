@@ -5,13 +5,14 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using static Stalware.SqlMapper.Enums;
+using Stalware.SqlMapper.Interfaces;
 
 namespace Stalware.SqlMapper
 {
     /// <summary>
     /// Implements <see cref="ISelectBuilder{T}"/>
     /// </summary>
-    public class SelectBuilder<T> : ISelectBuilder<T> where T : new()
+    public class SelectBuilder<T> : ExpressionBuilderBase, ISelectBuilder<T> where T : new()
     {
         private readonly List<string> _selectList;
         private readonly StringBuilder _selectBuilder;
@@ -19,33 +20,19 @@ namespace Stalware.SqlMapper
         private readonly StringBuilder _whereBuilder;
         private readonly StringBuilder _orderByBuilder;
         private bool _firstSelectCalled;
-        private readonly SqlMapperResult _mapperResult;
-        private readonly Type _generatorType;
-        private int _paramCount = 0;
 
         /// <summary>
         /// Instantiates the <see cref="SelectBuilder{T}"/> class
         /// </summary>
-        public SelectBuilder()
+        /// <param name="generatorType">The expression type that implements <see cref="IExpressionToSqlGenerator"/>. Pass null to use the 
+        /// default type</param>
+        public SelectBuilder(Type generatorType = null) : base(generatorType)
         {
             _selectList = new List<string>();
             _selectBuilder = new StringBuilder();
             _fromBuilder = new StringBuilder();
             _whereBuilder = new StringBuilder();
             _orderByBuilder = new StringBuilder();
-            _mapperResult = new SqlMapperResult();
-            _generatorType = typeof(ExpressionToSqlGenerator);
-        }
-
-        /// <summary>
-        /// Instantiates the <see cref="SelectBuilder{T}"/> class with a type that represents a 
-        /// custom implementation of <see cref="IExpressionToSqlGenerator"/>
-        /// </summary>
-        /// <param name="expressionToSqlGeneratorImplementationType">The type that implements the 
-        /// <see cref="IExpressionToSqlGenerator"/> interface</param>
-        public SelectBuilder(Type expressionToSqlGeneratorImplementationType) : this()
-        {
-            _generatorType = expressionToSqlGeneratorImplementationType;
         }
 
         /// <summary>
@@ -203,7 +190,7 @@ namespace Stalware.SqlMapper
         }
 
         /// <summary>
-        /// Implements <see cref="ISelectBuilder{T}.Where(Expression{Func{T, bool}})"/>
+        /// Implements <see cref="IWhereable{T, TBuilder}.Where(Expression{Func{T, bool}})"/>
         /// </summary>
         public ISelectBuilder<T> Where(Expression<Func<T, bool>> predicate)
         {
@@ -237,7 +224,7 @@ namespace Stalware.SqlMapper
         }
 
         /// <summary>
-        /// Implements <see cref="ISelectBuilder{T}.Build"/>
+        /// Implements <see cref="IBuilder{TBuilder}.Build"/>
         /// </summary>
         public SqlMapperResult Build()
         {
@@ -255,8 +242,23 @@ namespace Stalware.SqlMapper
                 _selectBuilder.Append($" {_orderByBuilder}");
             }   
 
-            _mapperResult.Query = _selectBuilder.ToString();
-            return _mapperResult;
+            Result.Query = _selectBuilder.ToString();
+            return Result;
+        }
+
+        /// <summary>
+        /// Implements <see cref="IBuilder{TBuilder}.Clear"/>
+        /// </summary>
+        public ISelectBuilder<T> Clear()
+        {
+            _selectList.Clear();
+            _selectBuilder.Clear();
+            _fromBuilder.Clear();
+            _whereBuilder.Clear();
+            _orderByBuilder.Clear();
+            _firstSelectCalled = false;
+            ResetProps();
+            return this;
         }
 
         private ISelectBuilder<T> DoOrderBy<TType>(Expression<Func<TType, object>> predicate, bool desc)
@@ -365,16 +367,6 @@ namespace Stalware.SqlMapper
             {
                 _selectList.Add($"{alias}.*");
             }
-        }
-
-        private string GetConditionAndSetParameters(LambdaExpression lambda)
-        {
-            var generator = (IExpressionToSqlGenerator)Activator.CreateInstance(_generatorType);
-            generator.SetLambdaAndParameterCount(lambda, _paramCount);
-
-            var condition = generator.GetBuiltCondition(out var parameters, out _paramCount);
-            _mapperResult.Parameters.AddRange(parameters);
-            return condition;
-        }
+        }        
     }
 }

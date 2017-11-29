@@ -436,6 +436,216 @@ INSERT INTO Users (LastName)
 VALUES (@LastName)
 ```
 
+### SQL Server Get Inserted Id
+As discussed earlier in this document, MySQL and SQL Server have different ways of obtaining the last inserted id
+for a record. This is how you would do it in SQL Server:
+
+```csharp
+var result = new SQLServerInsertBuilder<Users>(user)
+    .GetInsertedId<long>()
+    .AddServerGuidIdStatement()
+    .InsertOnly(x => new {x.FirstName})
+    .Build();
+```
+
+This results in:
+
+```sql
+CREATE TABLE #temp (Id BIGINT); 
+INSERT INTO Users (Id, FirstName) 
+OUTPUT INSERTED.Id INTO #temp 
+VALUES (UUID(), @FirstName); 
+SELECT Id FROM @temp;
+```
+
+In the `.GetInsertedId<TType>` method, you must specify the type of id the column is. Based on the value 
+the library will determine what is the best SQL column type that can match the type given. In the example above 
+the library has determined that `BIGINT` is the SQL column type that resembles a `long` .NET type.
+
+There is a possibility that all the default types the library can determine are not the correct type. An 
+overload exists where you can pass in your own type:
+
+```csharp
+var result = new SQLServerInsertBuilder<Users>(user)
+    .GetInsertedId("SOMECOOLTYPE")
+    .AddServerGuidIdStatement()
+    .InsertOnly(x => new {x.FirstName})
+    .Build();
+```
+
+This results in:
+```sql
+CREATE TABLE #temp (Id SOMECOOLTYPE); 
+INSERT INTO Users (Id, FirstName) 
+OUTPUT INSERTED.Id INTO #temp 
+VALUES (UUID(), @FirstName); 
+SELECT Id FROM @temp;
+```
+
+Notice how `BIGINT` was replaced with `SOMECOOLTYPE`.
+
+### MySQL Get Inserted UUID
+Unfortunately, MySQL doesn't give us the `OUTPUT` clause that SQL Server does. Thus, we are limited in what 
+we can do. To retrieve the last inserted UUID, you can do this:
+
+```csharp
+var builder = new MySQLInsertBuilder<Users>(user)
+    .AddServerGuidIdStatement();
+var result = builder
+    .GetInsertedUUID()
+    .InsertOnly(x => new {x.FirstName})
+    .Build();
+```
+
+This results in:
+
+```sql
+SET @temp = SELECT UUID(); 
+INSERT INTO Users (Id, FirstName) 
+VALUES (@temp, @FirstName); 
+SELECT @temp;
+```
+
+Notice how in the code we had to do a two-step process to generate our query and couldn't chain the methods 
+to do it all in one shot. This is because the `.GetInsertedUUID` method is specific to MySQL and thus this 
+class cannot chain the interface methods.
+
+You must call the method `.AddServerGuidIdStatement` first before you can call `.GetInsertUUID`. This is to 
+ensure that only a UUID is returned and nothing unexpected is going in.
+
+### MySQL Get Auto Increment Id
+If your id column is not a guid but instead an integer that auto increments, you can do this to retrieve the last 
+generated integer id:
+
+```csharp
+var result = new MySQLInsertBuilder<Users>(user)
+    .GetLastAutoIncrementId()
+    .InsertOnly(x => new {x.FirstName})
+    .Build();
+```
+
+This results in:
+```sql
+INSERT INTO Users (FirstName) 
+VALUES (@FirstName); 
+SELECT LAST_INSERT_ID();
+```
+
+## Updates
+This section will describe the update statement builder. this is very similar to the insert builder.
+
+### Update All Columns
+To update all the columns of an object, do this:
+
+```csharp
+public class SmallClass
+{
+    [IdColumn]
+    public long Id {get; set;}
+    public string FirstName {get; set;}
+}
+
+var smallClass = new SmallClass
+{
+    Id = 5,
+    FirstName = "Daphnes"
+};
+
+var result = new UpdateBuilder<SmallClass>(smallClass)
+    .UpdateAll()
+    .Build();
+```
+
+This produces the query:
+
+```sql
+UPDATE SmallClass 
+SET FirstName = @FirstName 
+WHERE Id = @PARAM0
+```
+
+There are two things to note here. In the `SET` clause, you can see that the `Id` column is not included as a 
+column that needs to update. This is because usually the id column of a database does not need to be updated. If 
+for some reason however you do need this id to up be udpated, simpley call the method as such: 
+`.UpdateAll(false)`. The method accepts a bool that is defaulted to true to skip the id column to add to the 
+query. Passing in false tells the library to include the id column in the query. This will result in:
+
+```sql
+UPDATE SmallClass 
+SET Id = @Id, FirstName = @FirstName 
+WHERE Id = @PARAM0
+```
+
+The second thing you will notice is how the `WHERE` clause is auto populated with the id column in the condition. 
+This is mostly for protection so that you don't accidentally update all of your records. By default, this clause 
+is added. If for some reason you do not want this clause to be included and you want to update all records, 
+you can call the `PreventWhereOnIdAutoAdd()` method. Below is the 
+combined code with the optional calls metioned above:
+
+```csharp
+var result = new UpdateBuilder<SmallClass>(smallClass)
+    .UpdateAll(false)
+    .PreventWhereOnIdAutoAdd()
+    .Build();
+```
+
+This produces:
+```sql
+UPDATE SmallClass 
+SET Id = @Id, FirstName = @FirstName
+```
+
+## Deletes
+This section will describe the `DeleteBuilder`.
+
+### Simple Statement
+The delete statements are very simple and not complex like the previous builders we have seen thus far. Here 
+is a simple delete statement:
+
+```csharp
+var result = new DeleteBuilder<Users>(user)
+    .Build();
+```
+
+This produces:
+```sql
+DELETE FROM Users
+WHERE Id = @PARAM0
+```
+
+This works similarily to the the update builder where a `WHERE` clause is automatically generated if a where clause 
+was not previously provided. This is again to be safe so that you don't accidentally delete all of your records in 
+the table. This is the default behavior.
+
+Once again, to prevent this default behavior, just call the `PreventWhereOnIdAutoAdd` method:
+```csharp
+var result = new DeleteBuilder<Users>(user)
+    .PreventWhereOnIdAutoAdd()
+    .Build();
+```
+
+This produces:
+```sql
+DELETE FROM Users
+```
+
+### Statement With Where
+To add a `WHERE` clause, call the `Where` method:
+
+```csharp
+var result = new DeleteBuilder<Users>(user)
+    .Where(x => x.FirstName.Contains("Ganon"))
+    .Build();
+```
+
+This produces:
+```sql
+DELETE FROM Users
+WHERE FirstName LIKE @PARAM0
+```
+
+The where statements can be chained.
+
 ## Disclaimer
 There are quite a few libraries out there that achieve the same thing this library tries to achieve. However, 
 they are not free. I am currently the only developer on this library, so updates and new features can come quite 

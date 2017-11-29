@@ -21,5 +21,14 @@ namespace Stalware.SqlMapper.Tests
                 Active = true
             };
         }
+
+        public static SmallClass GetMockSmallClass()
+        {
+            return new SmallClass
+            {
+                Id = 4,
+                FirstName = "Daphnes"
+            };
+        }
     }
 }

@@ -8,12 +8,12 @@ using System.Text;
 namespace Stalware.SqlMapper.Tests
 {
     [TestClass]
-    public class MySQLInsertBuilderTests
+    public class MySqlInsertBuilderTests
     {
         [TestMethod]
         public void AddServerGuidTest()
         {
-            var result = new MySQLInsertBuilder<Users>(Utils.GetMockUser())
+            var result = new MySqlInsertBuilder<Users>(Utils.GetMockUser())
                 .AddServerGuidIdStatement()
                 .InsertOnly(x => new { x.LastName })
                 .Build();
@@ -22,14 +22,13 @@ namespace Stalware.SqlMapper.Tests
                 "VALUES (UUID(), @LastName)";
 
             Assert.AreEqual(expected, result.Query);
-            Assert.AreEqual("LastName", result.Parameters[0].Key);
-            Assert.AreEqual("Dragmire", result.Parameters[0].Value);
+            Assert.AreEqual("Dragmire", result.Parameters["LastName"]);
         }
 
         [TestMethod]
         public void GetInsertedUUIDTest()
         {
-            var builder = new MySQLInsertBuilder<Users>(Utils.GetMockUser());
+            var builder = new MySqlInsertBuilder<Users>(Utils.GetMockUser());
             builder
                 .InsertOnly(x => new { x.LastName })
                 .AddServerGuidIdStatement();
@@ -43,14 +42,13 @@ namespace Stalware.SqlMapper.Tests
                 "SELECT @temp;";
 
             Assert.AreEqual(expected, result.Query);
-            Assert.AreEqual("LastName", result.Parameters[0].Key);
-            Assert.AreEqual("Dragmire", result.Parameters[0].Value);
+            Assert.AreEqual("Dragmire", result.Parameters["LastName"]);
         }
 
         [TestMethod]
         public void GetLastAutoIncrementIdTest()
         {
-            var result = new MySQLInsertBuilder<Users>(Utils.GetMockUser())
+            var result = new MySqlInsertBuilder<Users>(Utils.GetMockUser())
                 .GetLastAutoIncrementId()
                 .InsertOnly(x => new { x.FirstName })
                 .Build();
@@ -59,8 +57,36 @@ namespace Stalware.SqlMapper.Tests
                 "VALUES (@FirstName); SELECT LAST_INSERT_ID();";
 
             Assert.AreEqual(expected, result.Query);
-            Assert.AreEqual("FirstName", result.Parameters[0].Key);
-            Assert.AreEqual("Ganondorf", result.Parameters[0].Value);
+            Assert.AreEqual("Ganondorf", result.Parameters["FirstName"]);
+        }
+
+        [TestMethod]
+        public void MySQLServerGuidClearExceptionTest()
+        {
+            var builder = new MySqlInsertBuilder<Users>(Utils.GetMockUser());
+            var iBuilder = builder.AddServerGuidIdStatement();
+
+            iBuilder.Clear();
+            Assert.ThrowsException<InvalidOperationException>(() => builder.GetInsertedUUID());
+        }
+
+        [TestMethod]
+        public void MySQLInsertClearTest()
+        {
+            var builder = new MySqlInsertBuilder<Users>(Utils.GetMockUser());
+            builder.AddServerGuidIdStatement();
+            builder
+                .GetInsertedUUID()
+                .InsertOnly(x => new { x.FirstName });
+
+            builder.Clear();
+            var result = builder
+                .InsertOnly(x => new { x.LastName })
+                .Build();
+
+            var expected = "INSERT INTO Users (LastName) VALUES (@LastName)";
+            Assert.AreEqual(expected, result.Query);
+            Assert.AreEqual("Dragmire", result.Parameters["LastName"]);
         }
     }
 }

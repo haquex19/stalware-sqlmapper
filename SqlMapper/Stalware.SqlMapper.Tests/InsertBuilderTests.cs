@@ -13,7 +13,7 @@ namespace Stalware.SqlMapper.Tests
         [TestMethod]
         public void AllPropertiesTest()
         {
-            var result = new SQLServerInsertBuilder<Users>(Utils.GetMockUser())
+            var result = new SqlServerInsertBuilder<Users>(Utils.GetMockUser())
                 .InsertAll()
                 .Build();
 
@@ -21,26 +21,19 @@ namespace Stalware.SqlMapper.Tests
                 "VALUES (@CreatedAt, @ModifiedAt, @FirstName, @LastName, @Email, @Balance, @Active)";
 
             Assert.AreEqual(expected, result.Query);
-            Assert.AreEqual("CreatedAt", result.Parameters[0].Key);
-            Assert.AreEqual(DateTime.Today, result.Parameters[0].Value);
-            Assert.AreEqual("ModifiedAt", result.Parameters[1].Key);
-            Assert.AreEqual(DateTime.Today, result.Parameters[1].Value);
-            Assert.AreEqual("FirstName", result.Parameters[2].Key);
-            Assert.AreEqual("Ganondorf", result.Parameters[2].Value);
-            Assert.AreEqual("LastName", result.Parameters[3].Key);
-            Assert.AreEqual("Dragmire", result.Parameters[3].Value);
-            Assert.AreEqual("Email", result.Parameters[4].Key);
-            Assert.AreEqual("ganon@gerudo.valley", result.Parameters[4].Value);
-            Assert.AreEqual("Balance", result.Parameters[5].Key);
-            Assert.AreEqual(9999, Convert.ToInt32(result.Parameters[5].Value));
-            Assert.AreEqual("Active", result.Parameters[6].Key);
-            Assert.AreEqual(true, result.Parameters[6].Value);
+            Assert.AreEqual(DateTime.Today, result.Parameters["CreatedAt"]);
+            Assert.AreEqual(DateTime.Today, result.Parameters["ModifiedAt"]);
+            Assert.AreEqual("Ganondorf", result.Parameters["FirstName"]);
+            Assert.AreEqual("Dragmire", result.Parameters["LastName"]);
+            Assert.AreEqual("ganon@gerudo.valley", result.Parameters["Email"]);
+            Assert.AreEqual(9999, Convert.ToInt32(result.Parameters["Balance"]));
+            Assert.AreEqual(true, result.Parameters["Active"]);
         }
 
         [TestMethod]
         public void AllExceptTest()
         {
-            var result = new MySQLInsertBuilder<Users>(Utils.GetMockUser())
+            var result = new MySqlInsertBuilder<Users>(Utils.GetMockUser())
                 .InsertAllExcept(x => new { x.LastName, x.Email })
                 .Build();
 
@@ -48,22 +41,17 @@ namespace Stalware.SqlMapper.Tests
                 "VALUES (@CreatedAt, @ModifiedAt, @FirstName, @Balance, @Active)";
 
             Assert.AreEqual(expected, result.Query);
-            Assert.AreEqual("CreatedAt", result.Parameters[0].Key);
-            Assert.AreEqual(DateTime.Today, result.Parameters[0].Value);
-            Assert.AreEqual("ModifiedAt", result.Parameters[1].Key);
-            Assert.AreEqual(DateTime.Today, result.Parameters[1].Value);
-            Assert.AreEqual("FirstName", result.Parameters[2].Key);
-            Assert.AreEqual("Ganondorf", result.Parameters[2].Value);
-            Assert.AreEqual("Balance", result.Parameters[3].Key);
-            Assert.AreEqual(9999, Convert.ToInt32(result.Parameters[3].Value));
-            Assert.AreEqual("Active", result.Parameters[4].Key);
-            Assert.AreEqual(true, result.Parameters[4].Value);
+            Assert.AreEqual(DateTime.Today, result.Parameters["CreatedAt"]);
+            Assert.AreEqual(DateTime.Today, result.Parameters["ModifiedAt"]);
+            Assert.AreEqual("Ganondorf", result.Parameters["FirstName"]);
+            Assert.AreEqual(9999, Convert.ToInt32(result.Parameters["Balance"]));
+            Assert.AreEqual(true, result.Parameters["Active"]);
         }
 
         [TestMethod]
         public void OnlyColumnsTest()
         {
-            var result = new SQLServerInsertBuilder<Users>(Utils.GetMockUser())
+            var result = new SqlServerInsertBuilder<Users>(Utils.GetMockUser())
                 .InsertOnly(x => new { x.FirstName, x.LastName })
                 .Build();
 
@@ -71,10 +59,34 @@ namespace Stalware.SqlMapper.Tests
                 "VALUES (@FirstName, @LastName)";
 
             Assert.AreEqual(expected, result.Query);
-            Assert.AreEqual("FirstName", result.Parameters[0].Key);
-            Assert.AreEqual("Ganondorf", result.Parameters[0].Value);
-            Assert.AreEqual("LastName", result.Parameters[1].Key);
-            Assert.AreEqual("Dragmire", result.Parameters[1].Value);
+            Assert.AreEqual("Ganondorf", result.Parameters["FirstName"]);
+            Assert.AreEqual("Dragmire", result.Parameters["LastName"]);
+        }
+
+        [TestMethod]
+        public void IncludeIdTest()
+        {
+            var result = new SqlServerInsertBuilder<SmallClass>(Utils.GetMockSmallClass())
+                .InsertAll(true)
+                .Build();
+
+            var expected = "INSERT INTO SmallClass (Id, FirstName) " +
+                "VALUES (@Id, @FirstName)";
+
+            Assert.AreEqual(expected, result.Query);
+            Assert.AreEqual(4, Convert.ToInt32(result.Parameters["Id"]));
+            Assert.AreEqual("Daphnes", result.Parameters["FirstName"]);
+
+            result = new SqlServerInsertBuilder<Users>(Utils.GetMockUser())
+                .InsertOnly(x => new { x.Id, x.FirstName }, true)
+                .Build();
+
+            expected = "INSERT INTO Users (Id, FirstName) " +
+                "VALUES (@Id, @FirstName)";
+
+            Assert.AreEqual(expected, result.Query);
+            Assert.AreEqual(5, Convert.ToInt32(result.Parameters["Id"]));
+            Assert.AreEqual("Ganondorf", result.Parameters["FirstName"]);
         }
     }
 }

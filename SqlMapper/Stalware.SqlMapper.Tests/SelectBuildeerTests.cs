@@ -67,10 +67,8 @@ namespace Stalware.SqlMapper.Tests
                 "WHERE ((x.Id = @PARAM0) AND (x.FirstName = @PARAM1))";            
 
             Assert.AreEqual(expected, result.Query);
-            Assert.AreEqual("PARAM0", result.Parameters[0].Key);
-            Assert.AreEqual(5, Convert.ToInt32(result.Parameters[0].Value));
-            Assert.AreEqual("PARAM1", result.Parameters[1].Key);
-            Assert.AreEqual("Mahbubul", result.Parameters[1].Value);
+            Assert.AreEqual(5, Convert.ToInt32(result.Parameters["PARAM0"]));
+            Assert.AreEqual("Mahbubul", result.Parameters["PARAM1"]);
 
             result = new SelectBuilder<Users>()
                 .Select(x => new { x.Id, x.FirstName })
@@ -82,10 +80,8 @@ namespace Stalware.SqlMapper.Tests
                 "WHERE ((x.Email = @PARAM0) OR (x.FirstName = @PARAM1))";
 
             Assert.AreEqual(expected, result.Query);
-            Assert.AreEqual("PARAM0", result.Parameters[0].Key);
-            Assert.AreEqual("mhaquex19@gmail.com", result.Parameters[0].Value);
-            Assert.AreEqual("PARAM1", result.Parameters[1].Key);
-            Assert.AreEqual("Fosh", result.Parameters[1].Value);
+            Assert.AreEqual("mhaquex19@gmail.com", result.Parameters["PARAM0"]);
+            Assert.AreEqual("Fosh", result.Parameters["PARAM1"]);
         }
 
         [TestMethod]
@@ -101,8 +97,7 @@ namespace Stalware.SqlMapper.Tests
                 "WHERE (x.Active = 0 AND (x.FirstName = @PARAM0))";
 
             Assert.AreEqual(expected, result.Query);
-            Assert.AreEqual("PARAM0", result.Parameters[0].Key);
-            Assert.AreEqual("Fosh", result.Parameters[0].Value);
+            Assert.AreEqual("Fosh", result.Parameters["PARAM0"]);
 
             result = new SelectBuilder<Users>()
                 .Select(x => new { })
@@ -131,8 +126,7 @@ namespace Stalware.SqlMapper.Tests
                 "ORDER BY x.Id";
 
             Assert.AreEqual(expected, result.Query);
-            Assert.AreEqual("PARAM0", result.Parameters[0].Key);
-            Assert.AreEqual("Mahbubul", result.Parameters[0].Value);
+            Assert.AreEqual("Mahbubul", result.Parameters["PARAM0"]);
 
             result = new SelectBuilder<Users>()
                 .Select(x => new { x.Id, x.FirstName })
@@ -148,12 +142,9 @@ namespace Stalware.SqlMapper.Tests
                 "ORDER BY x.Id, x.FirstName, x.LastName, x.CreatedAt DESC";
 
             Assert.AreEqual(expected, result.Query);
-            Assert.AreEqual("PARAM0", result.Parameters[0].Key);
-            Assert.AreEqual("MAHBUBUL", result.Parameters[0].Value);
-            Assert.AreEqual("PARAM1", result.Parameters[1].Key);
-            Assert.AreEqual(5, Convert.ToInt32(result.Parameters[1].Value));
-            Assert.AreEqual("PARAM2", result.Parameters[2].Key);
-            Assert.AreEqual("Fosh", result.Parameters[2].Value);
+            Assert.AreEqual("MAHBUBUL", result.Parameters["PARAM0"]);
+            Assert.AreEqual(5, Convert.ToInt32(result.Parameters["PARAM1"]));
+            Assert.AreEqual("Fosh", result.Parameters["PARAM2"]);
 
             result = new SelectBuilder<Users>()
                 .Select(x => new { })
@@ -196,8 +187,7 @@ namespace Stalware.SqlMapper.Tests
                 "WHERE (x.FirstName = @PARAM0)";
 
             Assert.AreEqual(expected, result.Query);
-            Assert.AreEqual("PARAM0", result.Parameters[0].Key);
-            Assert.AreEqual("EEE", result.Parameters[0].Value);
+            Assert.AreEqual("EEE", result.Parameters["PARAM0"]);
 
             result = new SelectBuilder<Users>()
                 .Select(x => new { })
@@ -209,8 +199,7 @@ namespace Stalware.SqlMapper.Tests
                 "WHERE x.FirstName LIKE @PARAM0";
 
             Assert.AreEqual(expected, result.Query);
-            Assert.AreEqual("PARAM0", result.Parameters[0].Key);
-            Assert.AreEqual("%f%", result.Parameters[0].Value);
+            Assert.AreEqual("%f%", result.Parameters["PARAM0"]);
 
             result = new SelectBuilder<Users>()
                 .Select(x => new { })
@@ -222,10 +211,8 @@ namespace Stalware.SqlMapper.Tests
                 "WHERE ((x.FirstName = @PARAM0) AND x.LastName LIKE @PARAM1)";
 
             Assert.AreEqual(expected, result.Query);
-            Assert.AreEqual("PARAM0", result.Parameters[0].Key);
-            Assert.AreEqual("Mahbubul", result.Parameters[0].Value);
-            Assert.AreEqual("PARAM1", result.Parameters[1].Key);
-            Assert.AreEqual("%eee%", result.Parameters[1].Value);
+            Assert.AreEqual("Mahbubul", result.Parameters["PARAM0"]);
+            Assert.AreEqual("%eee%", result.Parameters["PARAM1"]);
 
             result = new SelectBuilder<Users>()
                 .Select(x => new { })
@@ -237,10 +224,8 @@ namespace Stalware.SqlMapper.Tests
                 "WHERE (x.FirstName LIKE @PARAM0 AND (LTRIM(RTRIM(x.LastName)) = @PARAM1))";
 
             Assert.AreEqual(expected, result.Query);
-            Assert.AreEqual("PARAM0", result.Parameters[0].Key);
-            Assert.AreEqual("eee%", result.Parameters[0].Value);
-            Assert.AreEqual("PARAM1", result.Parameters[1].Key);
-            Assert.AreEqual("Fosh", result.Parameters[1].Value);
+            Assert.AreEqual("eee%", result.Parameters["PARAM0"]);
+            Assert.AreEqual("Fosh", result.Parameters["PARAM1"]);
         }
         
         [TestMethod]
@@ -257,10 +242,8 @@ namespace Stalware.SqlMapper.Tests
                 "WHERE (x.Id > @PARAM0) OR (x.FirstName = @PARAM1)";
 
             Assert.AreEqual(expected, result.Query);
-            Assert.AreEqual("PARAM0", result.Parameters[0].Key);
-            Assert.AreEqual(5, Convert.ToInt32(result.Parameters[0].Value));
-            Assert.AreEqual("PARAM1", result.Parameters[1].Key);
-            Assert.AreEqual("Fosh", result.Parameters[1].Value);            
+            Assert.AreEqual(5, Convert.ToInt32(result.Parameters["PARAM0"]));
+            Assert.AreEqual("Fosh", result.Parameters["PARAM1"]);
         }
 
         [TestMethod]
@@ -284,14 +267,10 @@ namespace Stalware.SqlMapper.Tests
                 "ORDER BY x.Id";
 
             Assert.AreEqual(expected, result.Query);
-            Assert.AreEqual("PARAM0", result.Parameters[0].Key);
-            Assert.AreEqual("Fosh", result.Parameters[0].Value);
-            Assert.AreEqual("PARAM1", result.Parameters[1].Key);
-            Assert.AreEqual("Test", result.Parameters[1].Value);
-            Assert.AreEqual("PARAM2", result.Parameters[2].Key);
-            Assert.AreEqual(5, Convert.ToInt32(result.Parameters[2].Value));
-            Assert.AreEqual("PARAM3", result.Parameters[3].Key);
-            Assert.AreEqual(5, Convert.ToInt32(result.Parameters[3].Value));
+            Assert.AreEqual("Fosh", result.Parameters["PARAM0"]);
+            Assert.AreEqual("Test", result.Parameters["PARAM1"]);
+            Assert.AreEqual(5, Convert.ToInt32(result.Parameters["PARAM2"]));
+            Assert.AreEqual(5, Convert.ToInt32(result.Parameters["PARAM3"]));
         }
 
         [TestMethod]
@@ -310,8 +289,7 @@ namespace Stalware.SqlMapper.Tests
                 "WHERE (user.LastName = @PARAM0)";
 
             Assert.AreEqual(expected, result.Query);
-            Assert.AreEqual("PARAM0", result.Parameters[0].Key);
-            Assert.AreEqual("Fosh", result.Parameters[0].Value);
+            Assert.AreEqual("Fosh", result.Parameters["PARAM0"]);
 
             result = new SelectBuilder<Users>()
                 .Select(user => new { user.Id })
@@ -327,8 +305,7 @@ namespace Stalware.SqlMapper.Tests
                 "ORDER BY user.Id";
 
             Assert.AreEqual(expected, result.Query);
-            Assert.AreEqual("PARAM0", result.Parameters[0].Key);
-            Assert.AreEqual(5, Convert.ToInt32(result.Parameters[0].Value));
+            Assert.AreEqual(5, Convert.ToInt32(result.Parameters["PARAM0"]));
 
             result = new SelectBuilder<Users>()
                 .Select(user => new { })
@@ -393,8 +370,7 @@ namespace Stalware.SqlMapper.Tests
                 "ORDER BY x.LastName";
 
             Assert.AreEqual(expected, result.Query);
-            Assert.AreEqual("PARAM0", result.Parameters[0].Key);
-            Assert.AreEqual("6%", result.Parameters[0].Value);
+            Assert.AreEqual("6%", result.Parameters["PARAM0"]);
         }
 
         [TestMethod]
@@ -414,8 +390,7 @@ namespace Stalware.SqlMapper.Tests
                 "WHERE (x.Id > @PARAM0)";
 
             Assert.AreEqual(expected, result.Query);
-            Assert.AreEqual("PARAM0", result.Parameters[0].Key);
-            Assert.AreEqual(5, Convert.ToInt32(result.Parameters[0].Value));
+            Assert.AreEqual(5, Convert.ToInt32(result.Parameters["PARAM0"]));
 
             result = new SelectBuilder<BankAccounts>()
                 .Select(bank => new { })
@@ -451,10 +426,8 @@ namespace Stalware.SqlMapper.Tests
                 "WHERE (x.Id > @PARAM0) AND (bank.Name = @PARAM1)";
 
             Assert.AreEqual(expected, result.Query);
-            Assert.AreEqual("PARAM0", result.Parameters[0].Key);
-            Assert.AreEqual(5, Convert.ToInt32(result.Parameters[0].Value));
-            Assert.AreEqual("PARAM1", result.Parameters[1].Key);
-            Assert.AreEqual("Fosh", result.Parameters[1].Value);
+            Assert.AreEqual(5, Convert.ToInt32(result.Parameters["PARAM0"]));
+            Assert.AreEqual("Fosh", result.Parameters["PARAM1"]);
         }
 
         [TestMethod]
@@ -498,8 +471,33 @@ namespace Stalware.SqlMapper.Tests
                 "ORDER BY bank.Id, bank.Balance, x.Id DESC, x.FirstName DESC";
 
             Assert.AreEqual(expected, result.Query);
-            Assert.AreEqual("PARAM0", result.Parameters[0].Key);
-            Assert.AreEqual("Fosh", result.Parameters[0].Value);
+            Assert.AreEqual("Fosh", result.Parameters["PARAM0"]);
+        }
+
+        [TestMethod]
+        public void SelectClearTest()
+        {
+            var builder = new SelectBuilder<Users>()
+                .Select(x => new { x.Id })
+                .Where(x => x.Active && x.FirstName == "Fosh")
+                .OrderBy(x => x.FirstName);
+
+            builder.Clear();
+            var result = builder
+                .Select(x => new { x.FirstName, x.LastName })
+                .Join<SmallClass>((x, s) => x.FirstName == s.FirstName, s => new { })
+                .Where(x => x.Active && x.LastName == "Stuff")
+                .OrderBy<SmallClass>(s => s.FirstName)
+                .Build();
+
+            var expected = "SELECT x.FirstName, x.LastName, s.* " +
+                "FROM Users AS x " +
+                "JOIN SmallClass AS s ON (x.FirstName = s.FirstName) " +
+                "WHERE (x.Active = 1 AND (x.LastName = @PARAM0)) " +
+                "ORDER BY s.FirstName";
+
+            Assert.AreEqual(expected, result.Query);
+            Assert.AreEqual("Stuff", result.Parameters["PARAM0"]);
         }
     }
 }

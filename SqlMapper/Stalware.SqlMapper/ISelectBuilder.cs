@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Stalware.SqlMapper.Interfaces;
+using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Text;
@@ -9,7 +10,7 @@ namespace Stalware.SqlMapper
     /// Interface that contains SELECT related mappings
     /// </summary>
     /// <typeparam name="T">The initial table name type</typeparam>
-    public interface ISelectBuilder<T> where T : new()
+    public interface ISelectBuilder<T> : IBuilder<ISelectBuilder<T>>, IWhereable<T, ISelectBuilder<T>> where T : new()
     {
         /// <summary>
         /// Begins the select command by beginning the SELECT clause and by setting the 
@@ -100,14 +101,6 @@ namespace Stalware.SqlMapper
         ISelectBuilder<T> RightJoin<TJoin1, TJoin2>(Expression<Func<TJoin1, TJoin2, bool>> predicate, Expression<Func<TJoin2, object>> columnPredicate)
             where TJoin1 : new() 
             where TJoin2 : new();
-
-        /// <summary>
-        /// Adds a WHERE clause
-        /// </summary>
-        /// <param name="predicate">A conditional predicate to populate the WHERE clause. The object created by the type parameter in <see cref="ISelectBuilder{T}"/> 
-        /// is passed to the predicate</param>
-        /// <returns>Self</returns>
-        ISelectBuilder<T> Where(Expression<Func<T, bool>> predicate);
 
         /// <summary>
         /// Adds a WHERE clause for a specified table
@@ -202,11 +195,5 @@ namespace Stalware.SqlMapper
         /// The object created by <typeparamref name="TOther"/> is passed to the predicate</param>
         /// <returns>Self</returns>
         ISelectBuilder<T> OrderByMultipleDesc<TOther>(Expression<Func<TOther, object>> predicate) where TOther : new();
-
-        /// <summary>
-        /// Builds the SQL query and returns a <see cref="SqlMapperResult"/>
-        /// </summary>
-        /// <returns>The <see cref="SqlMapperResult"/></returns>
-        SqlMapperResult Build();
     }
 }

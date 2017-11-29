@@ -2,6 +2,10 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <Authors>Mahbubul Haque</Authors>
+    <Company>STALWARE LLC</Company>
+    <Description>A library that generates sql queries from strongly-typed classes and LINQ expressions.</Description>
+    <PackageReleaseNotes>First complete release</PackageReleaseNotes>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

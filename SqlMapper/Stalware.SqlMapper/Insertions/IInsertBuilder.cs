@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Stalware.SqlMapper.Interfaces;
+using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Text;
@@ -9,7 +10,7 @@ namespace Stalware.SqlMapper.Insertions
     /// Interface that contains methods for creating an INSERT statement
     /// </summary>
     /// <typeparam name="T">The default table type for the insert statement</typeparam>
-    public interface IInsertBuilder<T> where T : new()
+    public interface IInsertBuilder<T> : IBuilder<IInsertBuilder<T>> where T : new()
     {
         /// <summary>
         /// Include the server call for a new Guid on the id column
@@ -39,11 +40,5 @@ namespace Stalware.SqlMapper.Insertions
         /// <param name="includeId">Should the id column be explicitly inserted</param>
         /// <returns>Self</returns>
         IInsertBuilder<T> InsertOnly(Func<T, object> onlyColumns, bool includeId = false);
-
-        /// <summary>
-        /// Buils the insert statement
-        /// </summary>
-        /// <returns>A <see cref="SqlMapperResult"/> that contains the query and parameters</returns>
-        SqlMapperResult Build();
     }
 }
