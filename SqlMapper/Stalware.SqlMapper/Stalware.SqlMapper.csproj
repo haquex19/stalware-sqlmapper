@@ -6,14 +6,20 @@
     <Company>STALWARE LLC</Company>
     <Description>A library that generates sql queries from strongly-typed classes and LINQ expressions.</Description>
     <PackageReleaseNotes>First complete release</PackageReleaseNotes>
+    <PackageProjectUrl>https://github.com/haquex19/stalware-sqlmapper</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/haquex19/stalware-sqlmapper</RepositoryUrl>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DocumentationFile>bin\Debug\netstandard2.0\Stalware.SqlMapper.xml</DocumentationFile>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningsAsErrors />
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <DocumentationFile>bin\Release\netstandard2.0\Stalware.SqlMapper.xml</DocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsAsErrors />
   </PropertyGroup>
 
 </Project>
