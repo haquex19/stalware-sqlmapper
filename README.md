@@ -1,8 +1,8 @@
-# Release Unstable
-Use at your own risk...
-
 # Version
-Not yet released as a usable nuget package
+Nuget Installation:
+```
+PM> Install-Package Stalware.SqlMapper
+```
 
 # Before Reading
 - Lots of examples are provided in the unit test project. Reference this for more complex examples compared to the very basic examples provided in this document.
