@@ -3,6 +3,7 @@ using Stalware.SqlMapper.Insertions;
 using Stalware.SqlMapper.Tests.MockObjects;
 using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Text;
 
 namespace Stalware.SqlMapper.Tests
@@ -87,6 +88,47 @@ namespace Stalware.SqlMapper.Tests
             Assert.AreEqual(expected, result.Query);
             Assert.AreEqual(5, Convert.ToInt32(result.Parameters["Id"]));
             Assert.AreEqual("Ganondorf", result.Parameters["FirstName"]);
+        }
+
+        [TestMethod]
+        public void ExpandoObjectInsertTest()
+        {
+            dynamic expando = new ExpandoObject();
+            var dict = (IDictionary<string, object>)expando;
+
+            dict.Add("FirstName", null);
+            dict.Add("LastName", null);
+
+            var result = new SqlServerInsertBuilder<Users>(Utils.GetMockUser())
+                .InsertOnly(x => expando)
+                .Build();
+
+            var expected = "INSERT INTO Users (FirstName, LastName) " +
+                "VALUES (@FirstName, @LastName)";
+
+            Assert.AreEqual(expected, result.Query);
+            Assert.AreEqual("Ganondorf", result.Parameters["FirstName"]);
+            Assert.AreEqual("Dragmire", result.Parameters["LastName"]);
+
+            expando = new ExpandoObject();
+            dict = (IDictionary<string, object>)expando;
+
+            dict.Add("FirstName", null);
+            dict.Add("LastName", null);
+            dict.Add("Email", null);
+            dict.Add("Balance", null);
+            dict.Add("Active", null);
+
+            result = new SqlServerInsertBuilder<Users>(Utils.GetMockUser())
+                .InsertAllExcept(x => expando)
+                .Build();
+
+            expected = "INSERT INTO Users (CreatedAt, ModifiedAt) " +
+                "VALUES (@CreatedAt, @ModifiedAt)";
+
+            Assert.AreEqual(expected, result.Query);
+            Assert.AreEqual(DateTime.Today, result.Parameters["CreatedAt"]);
+            Assert.AreEqual(DateTime.Today, result.Parameters["ModifiedAt"]);
         }
     }
 }

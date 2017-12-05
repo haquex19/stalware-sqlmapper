@@ -142,7 +142,7 @@ namespace Stalware.SqlMapper.Insertions
         {
             var properties = typeof(T).GetProperties();
             var exceptObj = exceptColumns(new T());
-            var exceptProperties = exceptObj.GetType().GetProperties();
+            var exceptProperties = exceptObj.GetColumnProperties();
 
             foreach (var prop in properties)
             {
@@ -166,7 +166,7 @@ namespace Stalware.SqlMapper.Insertions
         {
             var properties = typeof(T).GetProperties();
             var onlyColumnsObj = onlyColumns(new T());
-            var onlyColumnsProperties = onlyColumnsObj.GetType().GetProperties();
+            var onlyColumnsProperties = onlyColumnsObj.GetColumnProperties();
 
             foreach (var prop in properties)
             {

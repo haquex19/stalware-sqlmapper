@@ -2,6 +2,7 @@
 using Stalware.SqlMapper.Tests.MockObjects;
 using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Text;
 
 namespace Stalware.SqlMapper.Tests
@@ -197,6 +198,51 @@ namespace Stalware.SqlMapper.Tests
 
             Assert.AreEqual(expected, result.Query);
             Assert.AreEqual("Dragmire", result.Parameters["LastName"]);
+            Assert.AreEqual(5, Convert.ToInt32(result.Parameters["PARAM0"]));
+        }
+
+        [TestMethod]
+        public void ExpandoObjectUpdateTest()
+        {
+            dynamic expando = new ExpandoObject();
+            var dict = (IDictionary<string, object>)expando;
+
+            dict.Add("FirstName", null);
+            dict.Add("LastName", null);
+
+            var result = new UpdateBuilder<Users>(Utils.GetMockUser())
+                .UpdateOnly(x => expando)
+                .Build();
+
+            var expected = "UPDATE Users " +
+                "SET FirstName = @FirstName, LastName = @LastName " +
+                "WHERE Id = @PARAM0";
+
+            Assert.AreEqual(expected, result.Query);
+            Assert.AreEqual("Ganondorf", result.Parameters["FirstName"]);
+            Assert.AreEqual("Dragmire", result.Parameters["LastName"]);
+            Assert.AreEqual(5, Convert.ToInt32(result.Parameters["PARAM0"]));
+
+            expando = new ExpandoObject();
+            dict = (IDictionary<string, object>)expando;
+
+            dict.Add("FirstName", null);
+            dict.Add("LastName", null);
+            dict.Add("Email", null);
+            dict.Add("Balance", null);
+            dict.Add("Active", null);
+
+            result = new UpdateBuilder<Users>(Utils.GetMockUser())
+                .UpdateAllExcept(x => expando)
+                .Build();
+
+            expected = "UPDATE Users " +
+                "SET CreatedAt = @CreatedAt, ModifiedAt = @ModifiedAt " +
+                "WHERE Id = @PARAM0";
+
+            Assert.AreEqual(expected, result.Query);
+            Assert.AreEqual(DateTime.Today, result.Parameters["CreatedAt"]);
+            Assert.AreEqual(DateTime.Today, result.Parameters["ModifiedAt"]);
             Assert.AreEqual(5, Convert.ToInt32(result.Parameters["PARAM0"]));
         }
 

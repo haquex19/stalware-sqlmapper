@@ -3,6 +3,7 @@ using Stalware.SqlMapper;
 using Stalware.SqlMapper.Tests.MockObjects;
 using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Text;
 
 namespace Stalware.SqlMapper.Tests
@@ -498,6 +499,42 @@ namespace Stalware.SqlMapper.Tests
 
             Assert.AreEqual(expected, result.Query);
             Assert.AreEqual("Stuff", result.Parameters["PARAM0"]);
+        }
+
+        [TestMethod]
+        public void ExpandoObjectColumnTest()
+        {
+            dynamic expando = new ExpandoObject();
+            var dict = (IDictionary<string, object>)expando;
+
+            dict.Add("FirstName", null);
+            dict.Add("LastName", null);
+
+            var result = new SelectBuilder<Users>()
+                .Select(x => expando)
+                .Build();
+
+            var expected = "SELECT x.FirstName, x.LastName " +
+                "FROM Users AS x";
+
+            Assert.AreEqual(expected, result.Query);
+
+            expando = new ExpandoObject();
+            dict = (IDictionary<string, object>)expando;
+
+            dict.Add("CreditCard", null);
+            dict.Add("TestFosh", null);
+
+            result = new SelectBuilder<Users>()
+                .Select(x => new { })
+                .Join<BankAccounts>((x, bank) => x.Id == bank.UserId, bank => expando)
+                .Build();
+
+            expected = "SELECT x.*, bank.CreditCard, bank.TestFosh " +
+                "FROM Users AS x " +
+                "JOIN BankAccounts AS bank ON (x.Id = bank.UserId)";
+
+            Assert.AreEqual(expected, result.Query);
         }
     }
 }

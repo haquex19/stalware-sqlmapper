@@ -278,7 +278,7 @@ namespace Stalware.SqlMapper
         {
             var method = predicate.Compile();
             var conditionObj = method(new TType());
-            var properties = conditionObj.GetType().GetProperties();
+            var properties = conditionObj.GetColumnProperties();
 
             _orderByBuilder.Append(_orderByBuilder.Length == 0 ? "ORDER BY " : ", ");
             var alias = predicate.Parameters[0].Name;
@@ -354,7 +354,7 @@ namespace Stalware.SqlMapper
             var method = predicate.Compile();
             var alias = predicate.Parameters[0].Name;
             var columnObj = method(new TColumn());
-            var properties = columnObj.GetType().GetProperties();
+            var properties = columnObj.GetColumnProperties();
 
             if (properties.Any())
             {

@@ -108,7 +108,7 @@ namespace Stalware.SqlMapper
         {
             var properties = typeof(T).GetProperties();
             var obj = exceptColumns(new T());
-            var exceptProps = obj.GetType().GetProperties();
+            var exceptProps = obj.GetColumnProperties();
             
             foreach (var prop in properties)
             {
@@ -129,7 +129,7 @@ namespace Stalware.SqlMapper
         {
             var properties = typeof(T).GetProperties();
             var obj = onlyColumns(new T());
-            var onlyProps = obj.GetType().GetProperties();
+            var onlyProps = obj.GetColumnProperties();
 
             foreach (var prop in properties)
             {

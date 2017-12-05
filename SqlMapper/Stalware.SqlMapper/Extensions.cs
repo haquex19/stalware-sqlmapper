@@ -1,6 +1,7 @@
 ﻿using Stalware.SqlMapper.Attributes;
 using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -44,6 +45,27 @@ namespace Stalware.SqlMapper
             var properties = self.GetType().GetProperties();
             var idProperty = properties.FirstOrDefault(x => Attribute.IsDefined(x, typeof(IdColumn)));
             return idProperty?.GetValue(self);
+        }
+
+        /// <summary>
+        /// An extension method to retreive a list of properties of an object. Meant to support <see cref="ExpandoObject"/> types and 
+        /// anonymous types. Used to follow the LINQ anonymous column selection pattern.
+        /// </summary>
+        /// <param name="self"></param>
+        /// <returns></returns>
+        internal static PropertyInfo[] GetColumnProperties(this object self)
+        {
+            if (self is ExpandoObject expando)
+            {
+                var dict = (IDictionary<string, object>)expando;
+                var list = new List<ExpandoPropertyInfo>();
+                foreach (var pair in dict)
+                {
+                    list.Add(new ExpandoPropertyInfo(pair.Key));
+                }
+                return list.ToArray();
+            }
+            return self.GetType().GetProperties();
         }
     }
 }
