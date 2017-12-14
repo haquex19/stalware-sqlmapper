@@ -125,6 +125,17 @@ namespace Stalware.SqlMapper.Tests
 
             Assert.AreEqual(expected, result.Query);
             Assert.AreEqual("Fosh", result.Parameters["PARAM0"]);
+
+            result = new SelectBuilder<Users>()
+                .Select(x => new { x.Id })
+                .Where(x => x.FirstName == "Fosh" && !x.Active)
+                .Build();
+
+            expected = "SELECT x.Id FROM Users AS x " +
+                "WHERE ((x.FirstName = @PARAM0) AND x.Active = 0)";
+
+            Assert.AreEqual(expected, result.Query);
+            Assert.AreEqual("Fosh", result.Parameters["PARAM0"]);
         }
 
         [TestMethod]
