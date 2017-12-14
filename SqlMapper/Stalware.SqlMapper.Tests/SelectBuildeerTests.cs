@@ -113,6 +113,21 @@ namespace Stalware.SqlMapper.Tests
         }
 
         [TestMethod]
+        public void SelectWithWhereWithBooleanOnRightHandSideTest()
+        {
+            var result = new SelectBuilder<Users>()
+                .Select(x => new { x.Id })
+                .Where(x => x.FirstName == "Fosh" && x.Active)
+                .Build();
+
+            var expected = "SELECT x.Id FROM Users AS x " +
+                "WHERE ((x.FirstName = @PARAM0) AND x.Active = 1)";
+
+            Assert.AreEqual(expected, result.Query);
+            Assert.AreEqual("Fosh", result.Parameters["PARAM0"]);
+        }
+
+        [TestMethod]
         public void SelectWithWhereAndOrderByTest()
         {
             var result = new SelectBuilder<Users>()

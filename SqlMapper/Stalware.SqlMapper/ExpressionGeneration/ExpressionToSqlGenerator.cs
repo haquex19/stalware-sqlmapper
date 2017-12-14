@@ -67,7 +67,9 @@ namespace Stalware.SqlMapper.ExpressionGeneration
             var left = new StringBuilder(DetermineAndDoNextExecution(expression.Left, 
                 expression.NodeType != ExpressionType.AndAlso && 
                 expression.NodeType != ExpressionType.OrElse));
-            var right = new StringBuilder(DetermineAndDoNextExecution(expression.Right, true));
+            var right = new StringBuilder(DetermineAndDoNextExecution(expression.Right, 
+                expression.NodeType != ExpressionType.AndAlso &&
+                expression.NodeType != ExpressionType.OrElse));
 
             return left.Insert(0, "(").Append(sb).Append(right).Append(")");
         }
