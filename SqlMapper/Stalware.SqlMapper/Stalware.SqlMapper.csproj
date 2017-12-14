@@ -5,8 +5,8 @@
     <Authors>Mahbubul Haque</Authors>
     <Company>STALWARE LLC</Company>
     <Description>A library that generates sql queries from strongly-typed classes and LINQ expressions.</Description>
-    <PackageReleaseNotes>ExpandoObject support</PackageReleaseNotes>
-    <Version>1.0.1</Version>
+    <PackageReleaseNotes>Boolean expression on right hand side support</PackageReleaseNotes>
+    <Version>1.0.2</Version>
     <PackageProjectUrl>https://github.com/haquex19/stalware-sqlmapper</PackageProjectUrl>
     <RepositoryUrl>https://github.com/haquex19/stalware-sqlmapper</RepositoryUrl>
   </PropertyGroup>
