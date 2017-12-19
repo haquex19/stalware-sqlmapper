@@ -261,6 +261,49 @@ namespace Stalware.SqlMapper
             return this;
         }
 
+        /// <summary>
+        /// Implements <see cref="ISelectBuilder{T}.In(Expression{Func{T, object}}, object[])"/>
+        /// </summary>
+        public ISelectBuilder<T> In(Expression<Func<T, object>> predicate, params object[] values)
+        {
+            var method = predicate.Compile();
+            var obj = method(new T());
+
+            var alias = predicate.Parameters[0].Name;
+            var props = obj?.GetType().GetProperties();
+            string columnName;
+            if (props != null && props.Any())
+            {
+                if (props.Count() > 1)
+                {
+                    throw new ArgumentException("The predicate can only contain one property");
+                }
+
+                columnName = $"{alias}.{props.ElementAt(0).Name}";
+            }
+            else
+            {
+                if (!(predicate.Body is MemberExpression memberExpression))
+                {
+                    throw new ArgumentException("The predicate can only be a single member expression");
+                }
+
+                columnName = $"{alias}.{memberExpression.Member.Name}";
+            }            
+
+            var inClause = new StringBuilder();
+            foreach (var value in values)
+            {
+                var propName = $"PARAM{ParamCount++}";
+                inClause.Append($"@{propName}, ");
+                Result.Parameters.Add(propName, value);
+            }
+            inClause.Remove(inClause.Length - 2, 2);
+
+            _whereBuilder.Append(_whereBuilder.Length == 0 ? $"WHERE {columnName} IN ({inClause})" : $" AND {columnName} IN ({inClause})");
+            return this;
+        }
+
         private ISelectBuilder<T> DoOrderBy<TType>(Expression<Func<TType, object>> predicate, bool desc)
         {
             var memberExpression = predicate.Body is UnaryExpression unaryExpression ? 
@@ -367,6 +410,6 @@ namespace Stalware.SqlMapper
             {
                 _selectList.Add($"{alias}.*");
             }
-        }        
+        }
     }
 }

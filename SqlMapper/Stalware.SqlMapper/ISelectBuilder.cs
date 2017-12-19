@@ -195,5 +195,13 @@ namespace Stalware.SqlMapper
         /// The object created by <typeparamref name="TOther"/> is passed to the predicate</param>
         /// <returns>Self</returns>
         ISelectBuilder<T> OrderByMultipleDesc<TOther>(Expression<Func<TOther, object>> predicate) where TOther : new();
+
+        /// <summary>
+        /// Adds to the WHERE clause by adding an IN clause. (EX: ID IN (1, 2, 3, 4, 5))
+        /// </summary>
+        /// <param name="predicate">A predicate that returns the column to use for the IN clause</param>
+        /// <param name="values">The values to include in the IN clause</param>
+        /// <returns>Self</returns>
+        ISelectBuilder<T> In(Expression<Func<T, object>> predicate, params object[] values);
     }
 }

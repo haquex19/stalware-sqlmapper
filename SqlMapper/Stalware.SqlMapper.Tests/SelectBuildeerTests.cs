@@ -562,5 +562,56 @@ namespace Stalware.SqlMapper.Tests
 
             Assert.AreEqual(expected, result.Query);
         }
+
+        [TestMethod]
+        public void WhereInTest()
+        {
+            var result = new SelectBuilder<Users>()
+                .Select(x => new { })
+                .Where(x => x.Id == 5)
+                .In(x => x.FirstName, "Ganondorf", "Zelda")
+                .Build();
+
+            var expected = "SELECT x.* " +
+                "FROM Users AS x " +
+                "WHERE (x.Id = @PARAM0) AND x.FirstName IN (@PARAM1, @PARAM2)";
+
+            Assert.AreEqual(expected, result.Query);
+            Assert.AreEqual(5, Convert.ToInt32(result.Parameters["PARAM0"]));
+            Assert.AreEqual("Ganondorf", result.Parameters["PARAM1"]);
+            Assert.AreEqual("Zelda", result.Parameters["PARAM2"]);
+
+            result = new SelectBuilder<Users>()
+                .Select(x => new { })
+                .In(x => new { x.LastName }, "Dragmire")
+                .Build();
+
+            expected = "SELECT x.* " +
+                "FROM Users AS x " +
+                "WHERE x.LastName IN (@PARAM0)";
+
+            Assert.AreEqual(expected, result.Query);
+            Assert.AreEqual("Dragmire", result.Parameters["PARAM0"]);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentException))]
+        public void WhereInExceptionOnMultiPropObjectTest()
+        {
+            new SelectBuilder<Users>()
+                .Select(x => new { })
+                .In(x => new { x.FirstName, x.LastName }, "Dragmire")
+                .Build();
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentException))]
+        public void WhereInExceptionOnNonMemberExpressionTest()
+        {
+            new SelectBuilder<Users>()
+                .Select(x => new { })
+                .In(x => x.FirstName == x.LastName, "Dragmire")
+                .Build();
+        }
     }
 }
