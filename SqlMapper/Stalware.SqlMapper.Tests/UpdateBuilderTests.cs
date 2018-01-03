@@ -246,6 +246,24 @@ namespace Stalware.SqlMapper.Tests
             Assert.AreEqual(5, Convert.ToInt32(result.Parameters["PARAM0"]));
         }
 
+        [TestMethod]
+        public void UpdateWhereInTest()
+        {
+            var result = new UpdateBuilder<Users>(new Users { Active = true })
+                .UpdateOnly(x => new { x.Active })
+                .In(x => x.Id, 5, 8, 1, 2)
+                .Build();
+
+            var expected = "UPDATE Users SET Active = @Active WHERE Id IN (@PARAM0, @PARAM1, @PARAM2, @PARAM3)";
+
+            Assert.AreEqual(expected, result.Query);
+            Assert.AreEqual(true, result.Parameters["Active"]);
+            Assert.AreEqual(5, Convert.ToInt32(result.Parameters["PARAM0"]));
+            Assert.AreEqual(8, Convert.ToInt32(result.Parameters["PARAM1"]));
+            Assert.AreEqual(1, Convert.ToInt32(result.Parameters["PARAM2"]));
+            Assert.AreEqual(2, Convert.ToInt32(result.Parameters["PARAM3"]));
+        }
+
         private void TestUpdateAllExcept(SqlMapperResult result, string expected)
         {
             Assert.AreEqual(expected, result.Query);

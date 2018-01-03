@@ -74,6 +74,18 @@ namespace Stalware.SqlMapper
         }
 
         /// <summary>
+        /// Implements <see cref="IInable{T, TBuilder}.In(Expression{Func{T, object}}, object[])"/>
+        /// </summary>
+        public IUpdateBuilder<T> In(Expression<Func<T, object>> predicate, params object[] values)
+        {
+            var tuple = DoIn(predicate, values);
+            var alias = predicate.Parameters[0].Name;
+            var column = tuple.columnName.Replace($"{alias}.", string.Empty);
+            _whereBuilder.Append(_whereBuilder.Length == 0 ? $" WHERE {column} IN ({tuple.inClause})" : $" AND {column} IN ({tuple.inClause})");
+            return this;
+        }
+
+        /// <summary>
         /// Implements <see cref="IWhereOnIdPreventable{TBuilder}.PreventWhereOnIdAutoAdd"/>
         /// </summary>
         /// <returns></returns>

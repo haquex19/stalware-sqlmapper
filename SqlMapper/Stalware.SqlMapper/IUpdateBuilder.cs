@@ -10,7 +10,11 @@ namespace Stalware.SqlMapper
     /// Interface that contains UPDATE related mappings
     /// </summary>
     /// <typeparam name="T">The table name type</typeparam>
-    public interface IUpdateBuilder<T> : IBuilder<IUpdateBuilder<T>>, IWhereOnIdPreventable<IUpdateBuilder<T>>, IWhereable<T, IUpdateBuilder<T>> where T : new()
+    public interface IUpdateBuilder<T> : 
+        IBuilder<IUpdateBuilder<T>>, 
+        IWhereOnIdPreventable<IUpdateBuilder<T>>, 
+        IWhereable<T, IUpdateBuilder<T>>, 
+        IInable<T, IUpdateBuilder<T>> where T : new()
     {
         /// <summary>
         /// Updates all properties of an object to the table
@@ -32,6 +36,6 @@ namespace Stalware.SqlMapper
         /// </summary>
         /// <param name="onlyColumns">The properties to include in the insert</param>
         /// <returns>Self</returns>
-        IUpdateBuilder<T> UpdateOnly(Func<T, object> onlyColumns);        
+        IUpdateBuilder<T> UpdateOnly(Func<T, object> onlyColumns);
     }
 }
