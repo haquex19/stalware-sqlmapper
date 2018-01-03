@@ -81,5 +81,81 @@ namespace Stalware.SqlMapper.Tests
             var expected = "DELETE FROM Users";
             Assert.AreEqual(expected, result.Query);
         }
+
+        [TestMethod]
+        public void DeleteMultipleRecordsTest()
+        {
+            var list = new List<Users>
+            {
+                new Users
+                {
+                    Id = 1,
+                    FirstName = "Ganondorf"
+                },
+                new Users
+                {
+                    Id = 2,
+                    FirstName = "Link"
+                },
+                new Users
+                {
+                    Id = 3,
+                    FirstName = "Zelda"
+                }
+            };
+
+            var result = new DeleteBuilder<Users>(list)
+                .Build();
+
+            var expected = "DELETE FROM Users WHERE Id IN (@PARAM0, @PARAM1, @PARAM2)";
+
+            Assert.AreEqual(expected, result.Query);
+            Assert.AreEqual(1, Convert.ToInt32(result.Parameters["PARAM0"]));
+            Assert.AreEqual(2, Convert.ToInt32(result.Parameters["PARAM1"]));
+            Assert.AreEqual(3, Convert.ToInt32(result.Parameters["PARAM2"]));
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(NotSupportedException))]
+        public void DeleteMultipleNotSupportedExceptionTest()
+        {
+            var list = new List<Users>
+            {
+                new Users
+                {
+                    Id = 1,
+                    FirstName = "Ganondorf"
+                },
+                new Users
+                {
+                    Id = 2,
+                    FirstName = "Zelda"
+                }
+            };
+
+            var result = new DeleteBuilder<Users>(list)
+                .Where(x => x.FirstName == "Ganondorf");
+        }
+
+        [TestMethod]
+        public void DeleteWithListWithOneItem()
+        {
+            var list = new List<Users>
+            {
+                new Users
+                {
+                    Id = 1,
+                    FirstName = "Ganondorf"
+                }
+            };
+
+            var result = new DeleteBuilder<Users>(list)
+                .Build();
+
+            var expected = "DELETE FROM Users WHERE Id = @PARAM0";
+
+            Assert.AreEqual(expected, result.Query);
+            Assert.AreEqual(1, Convert.ToInt32(result.Parameters["PARAM0"]));
+        }
     }
 }

@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Linq.Expressions;
+using System.Linq;
 
 namespace Stalware.SqlMapper
 {
@@ -15,7 +16,7 @@ namespace Stalware.SqlMapper
     {
         private readonly StringBuilder _deleteBuilder;
         private readonly StringBuilder _whereBuilder;        
-        private readonly T _record;
+        private readonly IEnumerable<T> _records;
         private bool _preventWhereOnIdAutoAdd;
 
         /// <summary>
@@ -24,9 +25,24 @@ namespace Stalware.SqlMapper
         /// <param name="record">The record to delete</param>
         /// <param name="generatorType">The expression type that implements <see cref="IExpressionToSqlGenerator"/>. Pass null to use the 
         /// default type</param>
-        public DeleteBuilder(T record, Type generatorType = null) : base(generatorType)
+        public DeleteBuilder(T record, Type generatorType = null) : this(generatorType)
         {
-            _record = record;
+            _records = new List<T> { record };
+        }
+
+        /// <summary>
+        /// Instantiates the <see cref="DeleteBuilder{T}"/> class
+        /// </summary>
+        /// <param name="records">The list of records to delete</param>
+        /// <param name="generatorType">The expression type that implements <see cref="IExpressionToSqlGenerator"/>. Pass null to use the 
+        /// default type</param>
+        public DeleteBuilder(IEnumerable<T> records, Type generatorType = null) : this(generatorType)
+        {
+            _records = records;
+        }
+
+        private DeleteBuilder(Type generatorType) : base(generatorType)
+        {
             _deleteBuilder = new StringBuilder();
             _whereBuilder = new StringBuilder();
         }
@@ -40,11 +56,26 @@ namespace Stalware.SqlMapper
             {
                 var type = typeof(T);
                 var properties = type.GetProperties();
-                var paramName = $"PARAM{ParamCount++}";
                 var idProp = properties.GetIdColumnAttribute();
 
-                _whereBuilder.Append($" WHERE {idProp.Name} = @{paramName}");
-                Result.Parameters.Add(paramName, idProp.GetValue(_record));
+                if (_records.Count() == 1)
+                {
+                    var paramName = $"PARAM{ParamCount++}";
+                    _whereBuilder.Append($" WHERE {idProp.Name} = @{paramName}");
+                    Result.Parameters.Add(paramName, idProp.GetValue(_records.ElementAt(0)));
+                }
+                else
+                {
+                    _whereBuilder.Append($" WHERE {idProp.Name} IN (");
+                    foreach (var record in _records)
+                    {
+                        var paramName = $"PARAM{ParamCount++}";
+                        _whereBuilder.Append($"@{paramName}, ");
+                        Result.Parameters.Add(paramName, idProp.GetValue(record));
+                    }
+                    _whereBuilder.Remove(_whereBuilder.Length - 2, 2);
+                    _whereBuilder.Append(")");
+                }
             }
 
             _deleteBuilder.Append($"DELETE FROM {typeof(T).Name}").Append(_whereBuilder);
@@ -76,8 +107,15 @@ namespace Stalware.SqlMapper
         /// <summary>
         /// Implements <see cref="IWhereable{T, TBuilder}.Where(Expression{Func{T, bool}})"/>
         /// </summary>
+        /// <exception cref="NotSupportedException">Thrown if the delete builder was instantiated with a list of records to delete and 
+        /// that list contains more than one record</exception>
         public DeleteBuilder<T> Where(Expression<Func<T, bool>> predicate)
         {
+            if (_records.Count() > 1)
+            {
+                throw new NotSupportedException("The where clause cannot be changed when a list of records that contain more than one record are used");
+            }
+
             _whereBuilder.Append(_whereBuilder.Length == 0 ? " WHERE " : " AND ");
 
             var condition = GetConditionAndSetParameters(predicate);
