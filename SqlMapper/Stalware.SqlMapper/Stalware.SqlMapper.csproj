@@ -5,8 +5,8 @@
     <Authors>Mahbubul Haque</Authors>
     <Company>STALWARE LLC</Company>
     <Description>A library that generates sql queries from strongly-typed classes and LINQ expressions.</Description>
-    <PackageReleaseNotes>Added support for adding an in clause for the update builder</PackageReleaseNotes>
-    <Version>1.0.5</Version>
+    <PackageReleaseNotes>Added support for adding a custom WHERE clause</PackageReleaseNotes>
+    <Version>1.0.6</Version>
     <PackageProjectUrl>https://github.com/haquex19/stalware-sqlmapper</PackageProjectUrl>
     <RepositoryUrl>https://github.com/haquex19/stalware-sqlmapper</RepositoryUrl>
   </PropertyGroup>
