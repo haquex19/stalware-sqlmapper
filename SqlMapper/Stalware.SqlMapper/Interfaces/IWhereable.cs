@@ -19,5 +19,17 @@ namespace Stalware.SqlMapper.Interfaces
         /// is passed to the predicate</param>
         /// <returns>The builder</returns>
         TBuilder Where(Expression<Func<T, bool>> predicate);
+
+        /// <summary>
+        /// Specify your own WHERE clause with this method.
+        /// </summary>
+        /// <remarks>
+        /// This will reset the WHERE clause. The <paramref name="sql"/> argument must begin with 'WHERE '. 
+        /// The <paramref name="parameters"/> argument will not replace the current list of paramters. It will only be added on.
+        /// </remarks>
+        /// <param name="sql">The WHERE clause</param>
+        /// <param name="parameters">The parameters needed for the WHERE clause</param>
+        /// <returns>The builder</returns>
+        TBuilder WhereCustomSql(string sql, Dictionary<string, object> parameters);
     }
 }

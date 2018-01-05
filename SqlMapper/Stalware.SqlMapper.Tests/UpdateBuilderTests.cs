@@ -264,6 +264,46 @@ namespace Stalware.SqlMapper.Tests
             Assert.AreEqual(2, Convert.ToInt32(result.Parameters["PARAM3"]));
         }
 
+        [TestMethod]
+        public void CustomWhereClauseOnUpdateTest()
+        {
+            var result = new UpdateBuilder<Users>(Utils.GetMockUser())
+                .UpdateOnly(x => new { x.FirstName})
+                .WhereCustomSql($"WHERE x.{nameof(Users.FirstName)} != @Something", new Dictionary<string, object> { { "Something", "Test" } })
+                .Build();
+
+            var expected = "UPDATE Users SET FirstName = @FirstName WHERE x.FirstName != @Something";
+
+            Assert.AreEqual(expected, result.Query);
+            Assert.AreEqual("Ganondorf", result.Parameters["FirstName"]);
+            Assert.AreEqual("Test", result.Parameters["Something"]);
+        }
+
+        [TestMethod]
+        public void CustomWhereClauseResetsOnUpdateTest()
+        {
+            var result = new UpdateBuilder<Users>(Utils.GetMockUser())
+                .UpdateOnly(x => new { x.FirstName})
+                .Where(x => x.Id == 5)
+                .WhereCustomSql("WHERE x.Id = '5'", new Dictionary<string, object>())
+                .Build();
+
+            var expected = "UPDATE Users SET FirstName = @FirstName WHERE x.Id = '5'";
+
+            Assert.AreEqual(expected, result.Query);
+            Assert.AreEqual("Ganondorf", result.Parameters["FirstName"]);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentException))]
+        public void CustomWhereClauseExceptionOnUpdateTest()
+        {
+            var result = new UpdateBuilder<Users>(Utils.GetMockUser())
+                .UpdateOnly(x => new { x.FirstName})
+                .WhereCustomSql("Id != 5", new Dictionary<string, object>())
+                .Build();
+        }
+
         private void TestUpdateAllExcept(SqlMapperResult result, string expected)
         {
             Assert.AreEqual(expected, result.Query);

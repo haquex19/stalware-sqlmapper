@@ -9,7 +9,7 @@ namespace Stalware.SqlMapper.ExpressionGeneration
     /// <summary>
     /// Base class for builders that require expressions
     /// </summary>
-    public class ExpressionBuilderBase
+    public class BuilderBase
     {
         /// <summary>
         /// The expression generator type that implements <see cref="IExpressionToSqlGenerator"/>
@@ -27,12 +27,18 @@ namespace Stalware.SqlMapper.ExpressionGeneration
         protected readonly SqlMapperResult Result;
 
         /// <summary>
-        /// Instantiates the <see cref="ExpressionBuilderBase"/> class
+        /// The builder that builds the WHERE clause
+        /// </summary>
+        protected readonly StringBuilder WhereBuilder;
+
+        /// <summary>
+        /// Instantiates the <see cref="BuilderBase"/> class
         /// </summary>
         /// <param name="generatorType">The expression generator type that implements <see cref="IExpressionToSqlGenerator"/></param>
-        protected ExpressionBuilderBase(Type generatorType)
+        protected BuilderBase(Type generatorType)
         {
             GeneratorType = generatorType ?? typeof(ExpressionToSqlGenerator);
+            WhereBuilder = new StringBuilder();
             Result = new SqlMapperResult();
         }
 
@@ -114,6 +120,24 @@ namespace Stalware.SqlMapper.ExpressionGeneration
             }
             inClause.Remove(inClause.Length - 2, 2);
             return (columnName, inClause.ToString());
+        }
+
+        /// <summary>
+        /// Add the custom where clause to the where builder
+        /// </summary>
+        /// <param name="sql">The custom where clause</param>
+        /// <param name="parameters">The parameters required for the where clause</param>
+        /// <exception cref="ArgumentException">Thrown if the <paramref name="sql"/> argument does not start with 'WHERE '</exception>
+        protected void DoWhereCustomSql(string sql, Dictionary<string, object> parameters)
+        {
+            var trimmedSql = sql.Trim();
+            if (!trimmedSql.ToLower().StartsWith("where ")) throw new ArgumentException("The sql parameter does not begin with 'WHERE '");
+                        
+            WhereBuilder.Clear().Append($" {trimmedSql}");
+            foreach (var pair in parameters)
+            {
+                Result.Parameters.Add(pair.Key, pair.Value);
+            }
         }
     }
 }

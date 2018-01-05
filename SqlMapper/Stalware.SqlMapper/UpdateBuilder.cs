@@ -10,13 +10,12 @@ using System.Text;
 namespace Stalware.SqlMapper
 {
     /// <summary>
-    /// Implements <see cref="IUpdateBuilder{T}"/> and inherits <see cref="ExpressionBuilderBase"/>
+    /// Implements <see cref="IUpdateBuilder{T}"/> and inherits <see cref="BuilderBase"/>
     /// </summary>
-    public class UpdateBuilder<T> : ExpressionBuilderBase, IUpdateBuilder<T> where T : new()
+    public class UpdateBuilder<T> : BuilderBase, IUpdateBuilder<T> where T : new()
     {
         private readonly StringBuilder _updateBuilder;
         private readonly StringBuilder _setBuilder;
-        private readonly StringBuilder _whereBuilder;
         private readonly T _record;
         private readonly string _idColumn;
         private bool _preventWhereOnIdAutoAdd = false;
@@ -31,7 +30,6 @@ namespace Stalware.SqlMapper
         {
             _updateBuilder = new StringBuilder();
             _setBuilder = new StringBuilder();
-            _whereBuilder = new StringBuilder();
             _record = record;
 
             _idColumn = typeof(T).GetProperties().GetIdColumnAttributeName();
@@ -43,10 +41,10 @@ namespace Stalware.SqlMapper
         /// <returns></returns>
         public SqlMapperResult Build()
         {
-            if (_whereBuilder.Length == 0 && !_preventWhereOnIdAutoAdd)
+            if (WhereBuilder.Length == 0 && !_preventWhereOnIdAutoAdd)
             {
                 var paramName = $"PARAM{ParamCount++}";
-                _whereBuilder.Append($" WHERE {_idColumn} = @{paramName}");
+                WhereBuilder.Append($" WHERE {_idColumn} = @{paramName}");
 
                 var idValue = _record.GetIdColumnAttributeValue();
                 Result.Parameters.Add(paramName, idValue);
@@ -54,7 +52,7 @@ namespace Stalware.SqlMapper
 
             _setBuilder.Insert(0, "SET ");
             _setBuilder.Remove(_setBuilder.Length - 2, 2);
-            _updateBuilder.Append($"UPDATE {typeof(T).Name} {_setBuilder}{_whereBuilder}");
+            _updateBuilder.Append($"UPDATE {typeof(T).Name} {_setBuilder}{WhereBuilder}");
             Result.Query = _updateBuilder.ToString();
             return Result;
         }
@@ -67,7 +65,7 @@ namespace Stalware.SqlMapper
         {
             _updateBuilder.Clear();
             _setBuilder.Clear();
-            _whereBuilder.Clear();
+            WhereBuilder.Clear();
             _preventWhereOnIdAutoAdd = false;
             ResetProps();
             return this;
@@ -81,7 +79,7 @@ namespace Stalware.SqlMapper
             var tuple = DoIn(predicate, values);
             var alias = predicate.Parameters[0].Name;
             var column = tuple.columnName.Replace($"{alias}.", string.Empty);
-            _whereBuilder.Append(_whereBuilder.Length == 0 ? $" WHERE {column} IN ({tuple.inClause})" : $" AND {column} IN ({tuple.inClause})");
+            WhereBuilder.Append(WhereBuilder.Length == 0 ? $" WHERE {column} IN ({tuple.inClause})" : $" AND {column} IN ({tuple.inClause})");
             return this;
         }
 
@@ -158,11 +156,21 @@ namespace Stalware.SqlMapper
         /// </summary>
         public IUpdateBuilder<T> Where(Expression<Func<T, bool>> predicate)
         {
-            _whereBuilder.Append(_whereBuilder.Length == 0 ? " WHERE " : " AND ");
+            WhereBuilder.Append(WhereBuilder.Length == 0 ? " WHERE " : " AND ");
 
             var condition = GetConditionAndSetParameters(predicate);
             var parameter = predicate.Parameters[0].Name;
-            _whereBuilder.Append(condition.Replace($"{parameter}.", string.Empty));
+            WhereBuilder.Append(condition.Replace($"{parameter}.", string.Empty));
+            return this;
+        }
+
+        /// <summary>
+        /// Implements <see cref="IWhereable{T, TBuilder}.WhereCustomSql(string, Dictionary{string, object})"/>
+        /// </summary>
+        /// <exception cref="ArgumentException">Thrown if the <paramref name="sql"/> argument does not start with 'WHERE '</exception>
+        public IUpdateBuilder<T> WhereCustomSql(string sql, Dictionary<string, object> parameters)
+        {
+            DoWhereCustomSql(sql, parameters);
             return this;
         }
 

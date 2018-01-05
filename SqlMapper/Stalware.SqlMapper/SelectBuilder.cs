@@ -12,12 +12,11 @@ namespace Stalware.SqlMapper
     /// <summary>
     /// Implements <see cref="ISelectBuilder{T}"/>
     /// </summary>
-    public class SelectBuilder<T> : ExpressionBuilderBase, ISelectBuilder<T> where T : new()
+    public class SelectBuilder<T> : BuilderBase, ISelectBuilder<T> where T : new()
     {
         private readonly List<string> _selectList;
         private readonly StringBuilder _selectBuilder;
         private readonly StringBuilder _fromBuilder;
-        private readonly StringBuilder _whereBuilder;
         private readonly StringBuilder _orderByBuilder;
         private bool _firstSelectCalled;
 
@@ -31,7 +30,6 @@ namespace Stalware.SqlMapper
             _selectList = new List<string>();
             _selectBuilder = new StringBuilder();
             _fromBuilder = new StringBuilder();
-            _whereBuilder = new StringBuilder();
             _orderByBuilder = new StringBuilder();
         }
 
@@ -173,10 +171,7 @@ namespace Stalware.SqlMapper
         /// <exception cref="InvalidOperationException">Thrown if this method is called more than once</exception>
         public ISelectBuilder<T> Select(Expression<Func<T, object>> predicate)
         {
-            if (_firstSelectCalled)
-            {
-                throw new InvalidOperationException("This method can only be called once");
-            }            
+            if (_firstSelectCalled) throw new InvalidOperationException("This method can only be called once");
 
             var type = typeof(T);
             var tableName = type.Name;
@@ -232,9 +227,9 @@ namespace Stalware.SqlMapper
                 .Append($"{string.Join(", ", _selectList)} ")
                 .Append(_fromBuilder);
 
-            if (_whereBuilder.Length > 0)
+            if (WhereBuilder.Length > 0)
             {
-                _selectBuilder.Append($" {_whereBuilder}");
+                _selectBuilder.Append(WhereBuilder);
             }
 
             if (_orderByBuilder.Length > 0)
@@ -254,7 +249,7 @@ namespace Stalware.SqlMapper
             _selectList.Clear();
             _selectBuilder.Clear();
             _fromBuilder.Clear();
-            _whereBuilder.Clear();
+            WhereBuilder.Clear();
             _orderByBuilder.Clear();
             _firstSelectCalled = false;
             ResetProps();
@@ -267,7 +262,17 @@ namespace Stalware.SqlMapper
         public ISelectBuilder<T> In(Expression<Func<T, object>> predicate, params object[] values)
         {
             var tuple = DoIn(predicate, values);
-            _whereBuilder.Append(_whereBuilder.Length == 0 ? $"WHERE {tuple.columnName} IN ({tuple.inClause})" : $" AND {tuple.columnName} IN ({tuple.inClause})");
+            WhereBuilder.Append(WhereBuilder.Length == 0 ? $" WHERE {tuple.columnName} IN ({tuple.inClause})" : $" AND {tuple.columnName} IN ({tuple.inClause})");
+            return this;
+        }
+
+        /// <summary>
+        /// Implements <see cref="IWhereable{T, TBuilder}.WhereCustomSql(string, Dictionary{string, object})"/>
+        /// </summary>
+        /// <exception cref="ArgumentException">Thrown if the <paramref name="sql"/> argument does not start with 'WHERE '</exception>
+        public ISelectBuilder<T> WhereCustomSql(string sql, Dictionary<string, object> parameters)
+        {
+            DoWhereCustomSql(sql, parameters);
             return this;
         }
 
@@ -327,10 +332,8 @@ namespace Stalware.SqlMapper
             }
 
             if (columnAlias != joiningAlias)
-            {
                 throw new InvalidOperationException($"The alias on the join type is '{joiningAlias}' and the alias on the column predicate is '{columnAlias}'. " +
                     $"These alias's cannot differ and must match");
-            }
 
             var condition = GetConditionAndSetParameters(predicate);
             _fromBuilder
@@ -343,19 +346,16 @@ namespace Stalware.SqlMapper
         private ISelectBuilder<T> DoWhere<TType>(Expression<Func<TType, bool>> predicate)
         {
             var condition = GetConditionAndSetParameters(predicate);
-            _whereBuilder.Append(_whereBuilder.Length == 0 ? $"WHERE {condition}" : $" AND {condition}");
+            WhereBuilder.Append(WhereBuilder.Length == 0 ? $" WHERE {condition}" : $" AND {condition}");
             return this;
         }
 
         private ISelectBuilder<T> DoWhereOr<TType>(Expression<Func<TType, bool>> predicate)
         {
-            if (_whereBuilder.Length == 0)
-            {
-                throw new InvalidOperationException("The method 'Where' needs to be called before this method can be called");
-            }
+            if (WhereBuilder.Length == 0) throw new InvalidOperationException("The method 'Where' needs to be called before this method can be called");
 
             var condition = GetConditionAndSetParameters(predicate);
-            _whereBuilder.Append($" OR {condition}");
+            WhereBuilder.Append($" OR {condition}");
             return this;
         }
 

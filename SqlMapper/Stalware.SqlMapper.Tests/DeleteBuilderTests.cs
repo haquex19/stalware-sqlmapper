@@ -157,5 +157,40 @@ namespace Stalware.SqlMapper.Tests
             Assert.AreEqual(expected, result.Query);
             Assert.AreEqual(1, Convert.ToInt32(result.Parameters["PARAM0"]));
         }
+
+        [TestMethod]
+        public void CustomWhereClauseOnDeleteTest()
+        {
+            var result = new DeleteBuilder<Users>(Utils.GetMockUser())
+                .WhereCustomSql($"WHERE x.{nameof(Users.FirstName)} != @Something", new Dictionary<string, object> { { "Something", "Test" } })
+                .Build();
+
+            var expected = "DELETE FROM Users WHERE x.FirstName != @Something";
+
+            Assert.AreEqual(expected, result.Query);
+            Assert.AreEqual("Test", result.Parameters["Something"]);
+        }
+
+        [TestMethod]
+        public void CustomWhereClauseResetsOnDeleteTest()
+        {
+            var result = new DeleteBuilder<Users>(Utils.GetMockUser())
+                .Where(x => x.Id == 5)
+                .WhereCustomSql("WHERE x.Id = '5'", new Dictionary<string, object>())
+                .Build();
+
+            var expected = "DELETE FROM Users WHERE x.Id = '5'";
+
+            Assert.AreEqual(expected, result.Query);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentException))]
+        public void CustomWhereClauseExceptionOnDeleteTest()
+        {
+            var result = new DeleteBuilder<Users>(Utils.GetMockUser())
+                .WhereCustomSql("Id != 5", new Dictionary<string, object>())
+                .Build();
+        }
     }
 }

@@ -12,10 +12,9 @@ namespace Stalware.SqlMapper
     /// A class for generating a DELETE statement
     /// </summary>
     /// <typeparam name="T">The table type to delete</typeparam>
-    public class DeleteBuilder<T> : ExpressionBuilderBase, IBuilder<DeleteBuilder<T>>, IWhereOnIdPreventable<DeleteBuilder<T>>, IWhereable<T, DeleteBuilder<T>> where T : new()
+    public class DeleteBuilder<T> : BuilderBase, IBuilder<DeleteBuilder<T>>, IWhereOnIdPreventable<DeleteBuilder<T>>, IWhereable<T, DeleteBuilder<T>> where T : new()
     {
         private readonly StringBuilder _deleteBuilder;
-        private readonly StringBuilder _whereBuilder;        
         private readonly IEnumerable<T> _records;
         private bool _preventWhereOnIdAutoAdd;
 
@@ -44,7 +43,6 @@ namespace Stalware.SqlMapper
         private DeleteBuilder(Type generatorType) : base(generatorType)
         {
             _deleteBuilder = new StringBuilder();
-            _whereBuilder = new StringBuilder();
         }
 
         /// <summary>
@@ -52,7 +50,7 @@ namespace Stalware.SqlMapper
         /// </summary>
         public SqlMapperResult Build()
         {
-            if (_whereBuilder.Length == 0 && !_preventWhereOnIdAutoAdd)
+            if (WhereBuilder.Length == 0 && !_preventWhereOnIdAutoAdd)
             {
                 var type = typeof(T);
                 var properties = type.GetProperties();
@@ -61,24 +59,24 @@ namespace Stalware.SqlMapper
                 if (_records.Count() == 1)
                 {
                     var paramName = $"PARAM{ParamCount++}";
-                    _whereBuilder.Append($" WHERE {idProp.Name} = @{paramName}");
+                    WhereBuilder.Append($" WHERE {idProp.Name} = @{paramName}");
                     Result.Parameters.Add(paramName, idProp.GetValue(_records.ElementAt(0)));
                 }
                 else
                 {
-                    _whereBuilder.Append($" WHERE {idProp.Name} IN (");
+                    WhereBuilder.Append($" WHERE {idProp.Name} IN (");
                     foreach (var record in _records)
                     {
                         var paramName = $"PARAM{ParamCount++}";
-                        _whereBuilder.Append($"@{paramName}, ");
+                        WhereBuilder.Append($"@{paramName}, ");
                         Result.Parameters.Add(paramName, idProp.GetValue(record));
                     }
-                    _whereBuilder.Remove(_whereBuilder.Length - 2, 2);
-                    _whereBuilder.Append(")");
+                    WhereBuilder.Remove(WhereBuilder.Length - 2, 2);
+                    WhereBuilder.Append(")");
                 }
             }
 
-            _deleteBuilder.Append($"DELETE FROM {typeof(T).Name}").Append(_whereBuilder);
+            _deleteBuilder.Append($"DELETE FROM {typeof(T).Name}").Append(WhereBuilder);
             Result.Query = _deleteBuilder.ToString();
             return Result;
         }
@@ -90,7 +88,7 @@ namespace Stalware.SqlMapper
         public DeleteBuilder<T> Clear()
         {
             _deleteBuilder.Clear();
-            _whereBuilder.Clear();
+            WhereBuilder.Clear();
             ResetProps();
             return this;
         }
@@ -116,11 +114,21 @@ namespace Stalware.SqlMapper
                 throw new NotSupportedException("The where clause cannot be changed when a list of records that contain more than one record are used");
             }
 
-            _whereBuilder.Append(_whereBuilder.Length == 0 ? " WHERE " : " AND ");
+            WhereBuilder.Append(WhereBuilder.Length == 0 ? " WHERE " : " AND ");
 
             var condition = GetConditionAndSetParameters(predicate);
             var parameter = predicate.Parameters[0].Name;
-            _whereBuilder.Append(condition.Replace($"{parameter}.", string.Empty));
+            WhereBuilder.Append(condition.Replace($"{parameter}.", string.Empty));
+            return this;
+        }
+
+        /// <summary>
+        /// Implements <see cref="IWhereable{T, TBuilder}.WhereCustomSql(string, Dictionary{string, object})"/>
+        /// </summary>
+        /// <exception cref="ArgumentException">Thrown if the <paramref name="sql"/> argument does not start with 'WHERE '</exception>
+        public DeleteBuilder<T> WhereCustomSql(string sql, Dictionary<string, object> parameters)
+        {
+            DoWhereCustomSql(sql, parameters);
             return this;
         }
     }

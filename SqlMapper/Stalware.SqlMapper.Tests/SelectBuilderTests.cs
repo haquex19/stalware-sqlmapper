@@ -9,7 +9,7 @@ using System.Text;
 namespace Stalware.SqlMapper.Tests
 {
     [TestClass]
-    public class SelectBuildeerTests
+    public class SelectBuilderTests
     {
         [TestMethod]
         public void RegularSelectTest()
@@ -611,6 +611,44 @@ namespace Stalware.SqlMapper.Tests
             new SelectBuilder<Users>()
                 .Select(x => new { })
                 .In(x => x.FirstName == x.LastName, "Dragmire")
+                .Build();
+        }
+
+        [TestMethod]
+        public void CustomWhereClauseTest()
+        {
+            var result = new SelectBuilder<Users>()
+                .Select(x => new { })
+                .WhereCustomSql($"WHERE x.{nameof(Users.FirstName)} != @Something", new Dictionary<string, object> { { "Something", "Test" } })
+                .Build();
+
+            var expected = "SELECT x.* FROM Users AS x WHERE x.FirstName != @Something";
+
+            Assert.AreEqual(expected, result.Query);
+            Assert.AreEqual("Test", result.Parameters["Something"]);
+        }
+
+        [TestMethod]
+        public void CustomWhereClauseResetsTest()
+        {
+            var result = new SelectBuilder<Users>()
+                .Select(x => new { })
+                .Where(x => x.Id == 5)
+                .WhereCustomSql("WHERE x.Id = '5'", new Dictionary<string, object>())
+                .Build();
+
+            var expected = "SELECT x.* FROM Users AS x WHERE x.Id = '5'";
+
+            Assert.AreEqual(expected, result.Query);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentException))]
+        public void CustomWhereClauseExceptionTest()
+        {
+            var result = new SelectBuilder<Users>()
+                .Select(x => new { })
+                .WhereCustomSql("Id != 5", new Dictionary<string, object>())
                 .Build();
         }
     }
