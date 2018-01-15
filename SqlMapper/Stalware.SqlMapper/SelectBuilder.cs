@@ -257,9 +257,9 @@ namespace Stalware.SqlMapper
         }
 
         /// <summary>
-        /// Implements <see cref="IInable{T, TBuilder}.In(Expression{Func{T, object}}, object[])"/>
+        /// Implements <see cref="IInable{T, TBuilder}.In{TValue}(Expression{Func{T, object}}, IEnumerable{TValue})"/>
         /// </summary>
-        public ISelectBuilder<T> In(Expression<Func<T, object>> predicate, params object[] values)
+        public ISelectBuilder<T> In<TValue>(Expression<Func<T, object>> predicate, IEnumerable<TValue> values)
         {
             var tuple = DoIn(predicate, values);
             WhereBuilder.Append(WhereBuilder.Length == 0 ? $" WHERE {tuple.columnName} IN ({tuple.inClause})" : $" AND {tuple.columnName} IN ({tuple.inClause})");

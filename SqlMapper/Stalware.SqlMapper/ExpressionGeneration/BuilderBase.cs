@@ -74,10 +74,11 @@ namespace Stalware.SqlMapper.ExpressionGeneration
         /// Traverses the predicate expression and obtains the column name and the comma delimited parameters that are required to be used in the WHERE clause
         /// </summary>
         /// <typeparam name="T">The table type</typeparam>
+        /// <typeparam name="TValue">The type of values</typeparam>
         /// <param name="predicate">A predicate that returns the column to use for the IN clause</param>
         /// <param name="values">The values to include in the IN clause</param>
         /// <returns>A tuple that contains the column name and the comma delimited parameters for the WHERE clause</returns>
-        protected (string columnName, string inClause) DoIn<T>(Expression<Func<T, object>> predicate, params object[] values) where T : new()
+        protected (string columnName, string inClause) DoIn<T, TValue>(Expression<Func<T, object>> predicate, IEnumerable<TValue> values) where T : new()
         {
             var method = predicate.Compile();
             var obj = method(new T());

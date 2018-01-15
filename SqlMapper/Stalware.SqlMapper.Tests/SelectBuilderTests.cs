@@ -569,7 +569,7 @@ namespace Stalware.SqlMapper.Tests
             var result = new SelectBuilder<Users>()
                 .Select(x => new { })
                 .Where(x => x.Id == 5)
-                .In(x => x.FirstName, "Ganondorf", "Zelda")
+                .In(x => x.FirstName, new[] { "Ganondorf", "Zelda" })
                 .Build();
 
             var expected = "SELECT x.* " +
@@ -583,7 +583,7 @@ namespace Stalware.SqlMapper.Tests
 
             result = new SelectBuilder<Users>()
                 .Select(x => new { })
-                .In(x => new { x.LastName }, "Dragmire")
+                .In(x => new { x.LastName }, new[] { "Dragmire" })
                 .Build();
 
             expected = "SELECT x.* " +

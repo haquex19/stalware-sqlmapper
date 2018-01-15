@@ -251,7 +251,7 @@ namespace Stalware.SqlMapper.Tests
         {
             var result = new UpdateBuilder<Users>(new Users { Active = true })
                 .UpdateOnly(x => new { x.Active })
-                .In(x => x.Id, 5, 8, 1, 2)
+                .In(x => x.Id, new[] { 5, 8, 1, 2 })
                 .Build();
 
             var expected = "UPDATE Users SET Active = @Active WHERE Id IN (@PARAM0, @PARAM1, @PARAM2, @PARAM3)";
