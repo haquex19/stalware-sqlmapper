@@ -5,8 +5,8 @@
     <Authors>Mahbubul Haque</Authors>
     <Company>STALWARE LLC</Company>
     <Description>A library that generates sql queries from strongly-typed classes and LINQ expressions.</Description>
-    <PackageReleaseNotes>Added better support list values in the "In" builder. Previously, it errored out on dynamically created arrays. With this release, you must now pass in an IEnumrable list.</PackageReleaseNotes>
-    <Version>1.0.7</Version>
+    <PackageReleaseNotes>Added an interface for the DeleteBuilder for easy mocking</PackageReleaseNotes>
+    <Version>1.0.8</Version>
     <PackageProjectUrl>https://github.com/haquex19/stalware-sqlmapper</PackageProjectUrl>
     <RepositoryUrl>https://github.com/haquex19/stalware-sqlmapper</RepositoryUrl>
   </PropertyGroup>
