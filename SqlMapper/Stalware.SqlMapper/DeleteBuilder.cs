@@ -9,10 +9,9 @@ using System.Linq;
 namespace Stalware.SqlMapper
 {
     /// <summary>
-    /// A class for generating a DELETE statement
+    /// Implements <see cref="IDeleteBuilder{T}"/>
     /// </summary>
-    /// <typeparam name="T">The table type to delete</typeparam>
-    public class DeleteBuilder<T> : BuilderBase, IBuilder<DeleteBuilder<T>>, IWhereOnIdPreventable<DeleteBuilder<T>>, IWhereable<T, DeleteBuilder<T>> where T : new()
+    public class DeleteBuilder<T> : BuilderBase, IDeleteBuilder<T> where T : new()
     {
         private readonly StringBuilder _deleteBuilder;
         private readonly IEnumerable<T> _records;
@@ -85,7 +84,7 @@ namespace Stalware.SqlMapper
         /// Implements <see cref="IBuilder{TBuilder}.Clear"/>
         /// </summary>
         /// <returns></returns>
-        public DeleteBuilder<T> Clear()
+        public IDeleteBuilder<T> Clear()
         {
             _deleteBuilder.Clear();
             WhereBuilder.Clear();
@@ -96,7 +95,7 @@ namespace Stalware.SqlMapper
         /// <summary>
         /// Implements <see cref="IWhereOnIdPreventable{TBuilder}.PreventWhereOnIdAutoAdd"/>
         /// </summary>
-        public DeleteBuilder<T> PreventWhereOnIdAutoAdd()
+        public IDeleteBuilder<T> PreventWhereOnIdAutoAdd()
         {
             _preventWhereOnIdAutoAdd = true;
             return this;
@@ -107,7 +106,7 @@ namespace Stalware.SqlMapper
         /// </summary>
         /// <exception cref="NotSupportedException">Thrown if the delete builder was instantiated with a list of records to delete and 
         /// that list contains more than one record</exception>
-        public DeleteBuilder<T> Where(Expression<Func<T, bool>> predicate)
+        public IDeleteBuilder<T> Where(Expression<Func<T, bool>> predicate)
         {
             if (_records.Count() > 1)
             {
@@ -126,7 +125,7 @@ namespace Stalware.SqlMapper
         /// Implements <see cref="IWhereable{T, TBuilder}.WhereCustomSql(string, Dictionary{string, object})"/>
         /// </summary>
         /// <exception cref="ArgumentException">Thrown if the <paramref name="sql"/> argument does not start with 'WHERE '</exception>
-        public DeleteBuilder<T> WhereCustomSql(string sql, Dictionary<string, object> parameters)
+        public IDeleteBuilder<T> WhereCustomSql(string sql, Dictionary<string, object> parameters)
         {
             DoWhereCustomSql(sql, parameters);
             return this;
